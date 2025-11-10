@@ -68,6 +68,7 @@ class PetController extends Controller
 
     public function edit($id)
     {
+        // Ambil data pet
         $pet = DB::table('pet')
             ->leftJoin('pemilik', 'pet.idpemilik', '=', 'pemilik.idpemilik')
             ->leftJoin('user', 'pemilik.iduser', '=', 'user.iduser')
@@ -75,6 +76,7 @@ class PetController extends Controller
             ->leftJoin('jenis_hewan', 'ras_hewan.idjenis_hewan', '=', 'jenis_hewan.idjenis_hewan')
             ->select(
                 'pet.*',
+                'pet.nama as nama_pet',
                 'user.nama as nama_pemilik',
                 'user.email as email_pemilik',
                 'ras_hewan.nama_ras',
@@ -83,22 +85,20 @@ class PetController extends Controller
             ->where('pet.idpet', $id)
             ->first();
 
-        if (!$pet) {
-            abort(404, 'Data Pet tidak ditemukan.');
-        }
-
+        // Ambil semua ras hewan
         $rasHewan = DB::table('ras_hewan')
             ->leftJoin('jenis_hewan', 'ras_hewan.idjenis_hewan', '=', 'jenis_hewan.idjenis_hewan')
             ->select('ras_hewan.idras_hewan', 'ras_hewan.nama_ras', 'jenis_hewan.nama_jenis_hewan')
             ->orderBy('ras_hewan.nama_ras', 'asc')
             ->get();
 
-        $pemiliks = DB::table('pemilik')
+        // Ambil semua pemilik
+        $pemilik = DB::table('pemilik')
             ->join('user', 'pemilik.iduser', '=', 'user.iduser')
             ->select('pemilik.idpemilik', 'user.nama', 'user.email')
             ->get();
 
-        return view('rshp.admin.DataMaster.pet.edit', compact('pet', 'rasHewan', 'pemiliks'));
+        return view('rshp.admin.DataMaster.pet.edit', compact('pet', 'rasHewan', 'pemilik'));
     }
 
     public function update(Request $request, $id)

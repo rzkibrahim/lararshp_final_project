@@ -63,16 +63,20 @@ class KodeTindakanTerapiController extends Controller
 
     public function edit($id)
     {
-        $tindakanTerapi = DB::table('kode_tindakan_terapi')->where('idkode_tindakan_terapi', $id)->first();
-        if (!$tindakanTerapi) {
+        $tindakan = DB::table('kode_tindakan_terapi')
+            ->where('idkode_tindakan_terapi', $id)
+            ->first();
+
+        if (!$tindakan) {
             abort(404, 'Data tindakan terapi tidak ditemukan.');
         }
 
         $kategori = DB::table('kategori')->orderBy('nama_kategori', 'asc')->get();
         $kategoriKlinis = DB::table('kategori_klinis')->orderBy('nama_kategori_klinis', 'asc')->get();
 
-        return view('rshp.admin.DataMaster.kode-tindakan-terapi.edit', compact('tindakanTerapi', 'kategori', 'kategoriKlinis'));
+        return view('rshp.admin.DataMaster.kode-tindakan-terapi.edit', compact('tindakan', 'kategori', 'kategoriKlinis'));
     }
+
 
     public function update(Request $request, $id)
     {
@@ -83,8 +87,9 @@ class KodeTindakanTerapiController extends Controller
             'idkategori_klinis' => 'required|exists:kategori_klinis,idkategori_klinis',
         ]);
 
-        $tindakanTerapi = DB::table('kode_tindakan_terapi')->where('idkode_tindakan_terapi', $id)->first();
-        if (!$tindakanTerapi) {
+        $tindakan = DB::table('kode_tindakan_terapi')->where('idkode_tindakan_terapi', $id)->first();
+
+        if (!$tindakan) {
             return redirect()->route('admin.kode-tindakan-terapi.index')
                 ->with('error', 'Data tindakan terapi tidak ditemukan.');
         }
@@ -101,6 +106,7 @@ class KodeTindakanTerapiController extends Controller
         return redirect()->route('admin.kode-tindakan-terapi.index')
             ->with('success', 'Kode Tindakan/Terapi berhasil diupdate.');
     }
+
 
     public function destroy($id)
     {

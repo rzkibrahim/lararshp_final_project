@@ -59,7 +59,7 @@ class PemilikController extends Controller
             ->select(
                 'pemilik.idpemilik',
                 'pemilik.iduser',
-                'user.nama',
+                'user.nama',      // ⚠️ ini kolom dari tabel user
                 'user.email',
                 'pemilik.alamat',
                 'pemilik.no_wa'
@@ -71,7 +71,6 @@ class PemilikController extends Controller
             abort(404, 'Data pemilik tidak ditemukan.');
         }
 
-        // Ambil user yang belum punya pemilik atau user saat ini
         $users = DB::table('user')
             ->whereNotIn('iduser', function ($query) {
                 $query->select('iduser')->from('pemilik');
@@ -82,28 +81,43 @@ class PemilikController extends Controller
         return view('rshp.admin.DataMaster.pemilik.edit', compact('pemilik', 'users'));
     }
 
+
     public function update(Request $request, $id)
     {
-        $validated = $this->validatePemilik($request, $id);
+        $request->validate([
+            'nama'   => 'required|string|max:100',
+            'email'  => 'nullable|email',
+            'alamat' => 'required|string|max:255',
+            'no_wa'  => 'required|string|max:20',
+        ]);
 
         $pemilik = DB::table('pemilik')->where('idpemilik', $id)->first();
 
         if (!$pemilik) {
             return redirect()->route('admin.pemilik.index')
-                ->with('error', 'Pemilik tidak ditemukan.');
+                ->with('error', 'Data pemilik tidak ditemukan.');
         }
 
+        // 🔹 Update user
+        DB::table('user')
+            ->where('iduser', $pemilik->iduser)
+            ->update([
+                'nama'  => $request->nama,
+                'email' => $request->email,
+            ]);
+
+        // 🔹 Update pemilik
         DB::table('pemilik')
             ->where('idpemilik', $id)
             ->update([
-                'iduser' => $validated['iduser'],
-                'alamat' => $validated['alamat'],
-                'no_wa'  => $this->formatNoWa($validated['no_wa']),
+                'alamat' => $request->alamat,
+                'no_wa'  => $request->no_wa,
             ]);
 
         return redirect()->route('admin.pemilik.index')
-            ->with('success', 'Pemilik berhasil diupdate.');
+            ->with('success', 'Data pemilik berhasil diperbarui.');
     }
+
 
     public function destroy($id)
     {

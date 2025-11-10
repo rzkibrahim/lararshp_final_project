@@ -10,7 +10,6 @@ class KategoriKlinisController extends Controller
 {
     public function index()
     {
-        // Ambil semua data kategori klinis + jumlah tindakan
         $kategoriKlinis = DB::table('kategori_klinis')
             ->leftJoin('kode_tindakan_terapi', 'kategori_klinis.idkategori_klinis', '=', 'kode_tindakan_terapi.idkategori_klinis')
             ->select(
@@ -34,14 +33,12 @@ class KategoriKlinisController extends Controller
     {
         $request->validate([
             'nama_kategori_klinis' => 'required|string|max:50|unique:kategori_klinis,nama_kategori_klinis',
-        ], [
-            'nama_kategori_klinis.required' => 'Nama kategori klinis wajib diisi',
-            'nama_kategori_klinis.unique' => 'Nama kategori klinis sudah ada',
-            'nama_kategori_klinis.max' => 'Nama kategori klinis maksimal 50 karakter',
+            'deskripsi' => 'nullable|string|max:255',
         ]);
 
         DB::table('kategori_klinis')->insert([
             'nama_kategori_klinis' => trim(ucwords(strtolower($request->nama_kategori_klinis))),
+            'deskripsi' => $request->deskripsi, // tambahkan ini
         ]);
 
         return redirect()->route('admin.kategori-klinis.index')
@@ -51,6 +48,7 @@ class KategoriKlinisController extends Controller
     public function edit($id)
     {
         $kategoriKlinis = DB::table('kategori_klinis')
+            ->select('idkategori_klinis', 'nama_kategori_klinis')
             ->where('idkategori_klinis', $id)
             ->first();
 
@@ -61,14 +59,11 @@ class KategoriKlinisController extends Controller
         return view('rshp.admin.DataMaster.kategori-klinis.edit', compact('kategoriKlinis'));
     }
 
+
     public function update(Request $request, $id)
     {
         $request->validate([
             'nama_kategori_klinis' => 'required|string|max:50|unique:kategori_klinis,nama_kategori_klinis,' . $id . ',idkategori_klinis',
-        ], [
-            'nama_kategori_klinis.required' => 'Nama kategori klinis wajib diisi',
-            'nama_kategori_klinis.unique' => 'Nama kategori klinis sudah ada',
-            'nama_kategori_klinis.max' => 'Nama kategori klinis maksimal 50 karakter',
         ]);
 
         $kategoriKlinis = DB::table('kategori_klinis')->where('idkategori_klinis', $id)->first();
@@ -88,9 +83,9 @@ class KategoriKlinisController extends Controller
             ->with('success', 'Kategori Klinis berhasil diupdate');
     }
 
+
     public function destroy($id)
     {
-        // Cek apakah masih digunakan di tabel kode_tindakan_terapi
         $digunakan = DB::table('kode_tindakan_terapi')
             ->where('idkategori_klinis', $id)
             ->count();
