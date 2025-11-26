@@ -14,9 +14,6 @@
 
       <div class="absolute right-0 mt-2 w-60 bg-white rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50 border border-gray-200">
         <div class="py-2">
-          <a href="{{ route('admin.jenis-hewan.index') }}" class="flex items-center px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600">
-            <i class="fas fa-paw mr-2"></i> Jenis Hewan
-          </a>
           <a href="{{ route('admin.kategori.index') }}" class="flex items-center px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600">
             <i class="fas fa-tags mr-2"></i> Kategori
           </a>
@@ -35,8 +32,17 @@
           <a href="{{ route('admin.ras-hewan.index') }}" class="flex items-center px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600">
             <i class="fas fa-dna mr-2"></i> Ras Hewan
           </a>
+          <a href="{{ route('admin.jenis-hewan.index') }}" class="flex items-center px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600">
+            <i class="fas fa-paw mr-2"></i> Jenis Hewan
+          </a>
           <a href="{{ route('admin.role.index') }}" class="flex items-center px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600">
             <i class="fas fa-user-tag mr-2"></i> Role
+          </a>
+          <a href="{{ route('admin.dokter.index') }}" class="flex items-center px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600">
+            <i class="fas fa-user mr-2"></i> Dokter
+          </a>
+          <a href="{{ route('admin.perawat.index') }}" class="flex items-center px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600">
+            <i class="fas fa-user mr-2"></i> Perawat
           </a>
           <a href="{{ route('admin.user.index') }}" class="flex items-center px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600">
             <i class="fas fa-user mr-2"></i> User

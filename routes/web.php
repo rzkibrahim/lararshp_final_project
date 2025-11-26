@@ -13,6 +13,8 @@ use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\PemilikController;
 use App\Http\Controllers\Admin\PetController;
+use App\Http\Controllers\Admin\DokterController;
+use App\Http\Controllers\Admin\PerawatController;
 
 use App\Http\Controllers\Dokter\DashboardDokterController;
 use App\Http\Controllers\Dokter\RekamMedisDocController;
@@ -101,6 +103,26 @@ Route::middleware(['isAdministrator'])->prefix('admin')->group(function () {
             'edit' => 'admin.pemilik.edit',
             'update' => 'admin.pemilik.update',
             'destroy' => 'admin.pemilik.destroy',
+        ]);
+
+        // Dokter
+        Route::resource('dokter', DokterController::class)->names([
+            'index' => 'admin.dokter.index',
+            'create' => 'admin.dokter.create',
+            'store' => 'admin.dokter.store',
+            'edit' => 'admin.dokter.edit',
+            'update' => 'admin.dokter.update',
+            'destroy' => 'admin.dokter.destroy',
+        ]);
+
+        // Perawat
+        Route::resource('perawat', PerawatController::class)->names([
+            'index' => 'admin.perawat.index',
+            'create' => 'admin.perawat.create',
+            'store' => 'admin.perawat.store',
+            'edit' => 'admin.perawat.edit',
+            'update' => 'admin.perawat.update',
+            'destroy' => 'admin.perawat.destroy',
         ]);
 
         // Pet
@@ -313,7 +335,7 @@ Route::middleware(['auth', 'isPemilik'])->prefix('pemilik')->name('pemilik.')->g
     Route::get('/pet/{id}', [PetListController::class, 'show'])->name('pet.show');
 
     // Rekam Medis (view rekam medis)
-    Route::get('/rekammedis', [RekamMedisPemController::class, 'index'])->name('rekammedis.list');
+    Route::get('/rekamkmedis', [RekamMedisPemController::class, 'index'])->name('rekammedis.list');
     Route::get('/rekammedis/{id}', [RekamMedisPemController::class, 'show'])->name('rekammedis.show');
 
     // Reservasi (view jadwal temu dokter)
