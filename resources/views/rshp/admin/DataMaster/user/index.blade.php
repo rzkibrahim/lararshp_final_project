@@ -7,15 +7,15 @@
 <div class="max-w-6xl mx-auto">
     {{-- Notifikasi sukses/error --}}
     @if(session('success'))
-        <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-6">
-            <i class="fas fa-check-circle mr-2"></i>{{ session('success') }}
-        </div>
+    <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-6">
+        <i class="fas fa-check-circle mr-2"></i>{{ session('success') }}
+    </div>
     @endif
 
     @if(session('error'))
-        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
-            <i class="fas fa-exclamation-circle mr-2"></i>{{ session('error') }}
-        </div>
+    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
+        <i class="fas fa-exclamation-circle mr-2"></i>{{ session('error') }}
+    </div>
     @endif
 
     {{-- Card Container --}}
@@ -26,6 +26,21 @@
                 <h2 class="text-xl font-semibold text-white">Data User</h2>
                 <div class="flex items-center space-x-4">
                     <span class="text-blue-100">Total: {{ $users->count() }} user</span>
+
+                    {{-- ✅ TOMBOL TRASH --}}
+                    <a href="{{ route('admin.user.trash') }}"
+                        class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition duration-200">
+                        <i class="fas fa-trash mr-2"></i>Trash
+                        @php
+                        $trashCount = DB::table('user')->whereNotNull('deleted_at')->count();
+                        @endphp
+                        @if($trashCount > 0)
+                        <span class="ml-1 bg-white text-red-600 px-2 py-0.5 rounded-full text-xs font-bold">
+                            {{ $trashCount }}
+                        </span>
+                        @endif
+                    </a>
+
                     <a href="{{ route('admin.user.create') }}"
                         class="bg-white text-blue-700 px-4 py-2 rounded-lg hover:bg-blue-50 transition duration-200">
                         <i class="fas fa-plus mr-2"></i>Tambah Data
@@ -49,61 +64,72 @@
                 </thead>
                 <tbody>
                     @forelse ($users as $index => $user)
-                        <tr class="border-b border-gray-200 hover:bg-blue-50 transition duration-150">
-                            <td class="p-4 text-gray-600">{{ $index + 1 }}</td>
-                            <td class="p-4 text-gray-800 font-medium">{{ $user->iduser }}</td>
-                            <td class="p-4 text-gray-800">{{ $user->nama }}</td>
-                            <td class="p-4 text-gray-800">{{ $user->email }}</td>
+                    <tr class="border-b border-gray-200 hover:bg-blue-50 transition duration-150">
+                        <td class="p-4 text-gray-600">{{ $index + 1 }}</td>
+                        <td class="p-4 text-gray-800 font-medium">{{ $user->iduser }}</td>
+                        <td class="p-4 text-gray-800">{{ $user->nama }}</td>
+                        <td class="p-4 text-gray-800">{{ $user->email }}</td>
 
-                            {{-- ✅ Role diambil langsung dari hasil GROUP_CONCAT --}}
-                            <td class="p-4">
-                                @if($user->roles)
-                                    @foreach(explode(',', $user->roles) as $role)
-                                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200">
-                                            <i class="fas fa-check mr-1 text-xs"></i> {{ trim($role) }}
-                                        </span>
-                                    @endforeach
-                                @else
-                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-500">
-                                        Tidak ada role
-                                    </span>
-                                @endif
-                            </td>
+                        {{-- ✅ Role diambil langsung dari hasil GROUP_CONCAT --}}
+                        <td class="p-4">
+                            @if($user->roles)
+                            @foreach(explode(',', $user->roles) as $role)
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200">
+                                <i class="fas fa-check mr-1 text-xs"></i> {{ trim($role) }}
+                            </span>
+                            @endforeach
+                            @else
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-500">
+                                Tidak ada role
+                            </span>
+                            @endif
+                        </td>
 
-                            {{-- Tombol Aksi --}}
-                            <td class="p-4">
-                                <div class="flex gap-2">
-                                    <a href="{{ route('admin.user.edit', $user->iduser) }}"
-                                        class="px-3 py-1 text-sm text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition duration-200">
-                                        <i class="fas fa-edit mr-1"></i>Edit
-                                    </a>
-                                    <form action="{{ route('admin.user.destroy', $user->iduser) }}" method="POST"
-                                          onsubmit="return confirm('Apakah Anda yakin ingin menghapus user ini?')">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit"
-                                            class="px-3 py-1 text-sm text-white bg-red-600 rounded-lg hover:bg-red-700 transition duration-200">
-                                            <i class="fas fa-trash mr-1"></i>Hapus
-                                        </button>
-                                    </form>
-                                </div>
-                            </td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="6" class="p-8 text-center text-gray-500">
-                                <i class="fas fa-users text-4xl mb-4 text-gray-300"></i>
-                                <p class="text-lg">Tidak ada data user</p>
-                                <a href="{{ route('admin.user.create') }}"
-                                   class="inline-block mt-2 text-blue-600 hover:text-blue-800">
-                                   Tambah data pertama
+                        {{-- Tombol Aksi --}}
+                        <td class="p-4">
+                            <div class="flex gap-2">
+                                <a href="{{ route('admin.user.edit', $user->iduser) }}"
+                                    class="px-3 py-1 text-sm text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition duration-200">
+                                    <i class="fas fa-edit mr-1"></i>Edit
                                 </a>
-                            </td>
-                        </tr>
+
+                                {{-- ✅ SOFT DELETE - Pindah ke Trash --}}
+                                <form action="{{ route('admin.user.destroy', $user->iduser) }}" method="POST"
+                                    onsubmit="return confirm('Data akan dipindahkan ke trash. Lanjutkan?')">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit"
+                                        class="px-3 py-1 text-sm text-white bg-orange-500 rounded-lg hover:bg-orange-600 transition duration-200">
+                                        <i class="fas fa-trash mr-1"></i>Hapus
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    @empty
+                    <tr>
+                        <td colspan="6" class="p-8 text-center text-gray-500">
+                            <i class="fas fa-users text-4xl mb-4 text-gray-300"></i>
+                            <p class="text-lg">Tidak ada data user</p>
+                            <a href="{{ route('admin.user.create') }}"
+                                class="inline-block mt-2 text-blue-600 hover:text-blue-800">
+                                Tambah data pertama
+                            </a>
+                        </td>
+                    </tr>
                     @endforelse
                 </tbody>
             </table>
         </div>
+
+        @if($users->count() > 0)
+        <div class="p-4 bg-gray-50 border-t border-gray-200 text-sm text-gray-700 flex justify-between items-center">
+            <span>Menampilkan <span class="font-medium">{{ $users->count() }}</span> data aktif</span>
+            <a href="{{ route('admin.user.trash') }}" class="text-red-600 hover:text-red-800">
+                <i class="fas fa-trash mr-1"></i>Lihat Trash
+            </a>
+        </div>
+        @endif
     </div>
 </div>
 @endsection

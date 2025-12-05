@@ -22,14 +22,31 @@
     {{-- Card --}}
     <div class="bg-white rounded-xl shadow-lg overflow-hidden">
         {{-- Header --}}
-        <div class="bg-gradient-to-r from-blue-700 to-blue-600 px-6 py-4 flex justify-between items-center">
-            <h2 class="text-xl font-semibold text-white">Data Pemilik</h2>
-            <div class="flex items-center space-x-4">
-                <span class="text-blue-100">Total: {{ $pemiliks->count() }} pemilik</span>
-                <a href="{{ route('admin.pemilik.create') }}"
-                   class="bg-white text-blue-700 px-4 py-2 rounded-lg hover:bg-blue-50 transition duration-200">
-                    <i class="fas fa-plus mr-2"></i>Tambah Data
-                </a>
+        <div class="bg-gradient-to-r from-blue-700 to-blue-600 px-6 py-4">
+            <div class="flex justify-between items-center">
+                <h2 class="text-xl font-semibold text-white">Data Pemilik</h2>
+                <div class="flex items-center space-x-4">
+                    <span class="text-blue-100">Total: {{ $pemiliks->count() }} pemilik</span>
+                    
+                    {{-- ✅ TOMBOL TRASH --}}
+                    <a href="{{ route('admin.pemilik.trash') }}"
+                       class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition duration-200">
+                        <i class="fas fa-trash mr-2"></i>Trash
+                        @php
+                            $trashCount = DB::table('pemilik')->whereNotNull('deleted_at')->count();
+                        @endphp
+                        @if($trashCount > 0)
+                            <span class="ml-1 bg-white text-red-600 px-2 py-0.5 rounded-full text-xs font-bold">
+                                {{ $trashCount }}
+                            </span>
+                        @endif
+                    </a>
+
+                    <a href="{{ route('admin.pemilik.create') }}"
+                       class="bg-white text-blue-700 px-4 py-2 rounded-lg hover:bg-blue-50 transition duration-200">
+                        <i class="fas fa-plus mr-2"></i>Tambah Data
+                    </a>
+                </div>
             </div>
         </div>
 
@@ -64,19 +81,20 @@
                                         $punyaPet = DB::table('pet')->where('idpemilik', $pemilik->idpemilik)->exists();
                                     @endphp
 
-                                    @if(!$punyaPet)
-                                        <a href="{{ route('admin.pemilik.edit', $pemilik->idpemilik) }}"
-                                           class="px-3 py-1 text-sm text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition duration-200">
-                                            <i class="fas fa-edit mr-1"></i>Edit
-                                        </a>
+                                    <a href="{{ route('admin.pemilik.edit', $pemilik->idpemilik) }}"
+                                       class="px-3 py-1 text-sm text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition duration-200">
+                                        <i class="fas fa-edit mr-1"></i>Edit
+                                    </a>
 
+                                    {{-- ✅ SOFT DELETE - Pindah ke Trash --}}
+                                    @if(!$punyaPet)
                                         <form action="{{ route('admin.pemilik.destroy', $pemilik->idpemilik) }}"
                                               method="POST"
-                                              onsubmit="return confirm('Apakah Anda yakin ingin menghapus pemilik ini?')">
+                                              onsubmit="return confirm('Data akan dipindahkan ke trash. Lanjutkan?')">
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit"
-                                                    class="px-3 py-1 text-sm text-white bg-red-600 rounded-lg hover:bg-red-700 transition duration-200">
+                                                    class="px-3 py-1 text-sm text-white bg-orange-500 rounded-lg hover:bg-orange-600 transition duration-200">
                                                 <i class="fas fa-trash mr-1"></i>Hapus
                                             </button>
                                         </form>
@@ -105,6 +123,15 @@
                 </tbody>
             </table>
         </div>
+
+        @if($pemiliks->count() > 0)
+        <div class="p-4 bg-gray-50 border-t border-gray-200 text-sm text-gray-700 flex justify-between items-center">
+            <span>Menampilkan <span class="font-medium">{{ $pemiliks->count() }}</span> data aktif</span>
+            <a href="{{ route('admin.pemilik.trash') }}" class="text-red-600 hover:text-red-800">
+                <i class="fas fa-trash mr-1"></i>Lihat Trash
+            </a>
+        </div>
+        @endif
     </div>
 </div>
 @endsection

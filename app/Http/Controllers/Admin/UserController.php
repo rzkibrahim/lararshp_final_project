@@ -6,13 +6,17 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Auth;
 
 class UserController extends Controller
 {
     public function index()
     {
         $users = DB::table('user')
-            ->leftJoin('role_user', 'user.iduser', '=', 'role_user.iduser')
+            ->leftJoin('role_user', function ($join) {
+                $join->on('user.iduser', '=', 'role_user.iduser')
+                    ->whereNull('role_user.deleted_at');
+            })
             ->leftJoin('role', 'role_user.idrole', '=', 'role.idrole')
             ->select(
                 'user.iduser',
@@ -20,6 +24,7 @@ class UserController extends Controller
                 'user.email',
                 DB::raw('GROUP_CONCAT(role.nama_role SEPARATOR ", ") as roles')
             )
+            ->whereNull('user.deleted_at')
             ->groupBy('user.iduser', 'user.nama', 'user.email')
             ->orderBy('user.iduser', 'asc')
             ->get();
@@ -139,13 +144,72 @@ class UserController extends Controller
 
     public function destroy($id)
     {
-        // Hapus role dulu agar tidak orphan
-        DB::table('role_user')->where('iduser', $id)->delete();
+        // Soft delete user
+        DB::table('user')
+            ->where('iduser', $id)
+            ->update([
+                'deleted_at' => now(),
+                'deleted_by' => Auth::id()
+            ]);
 
-        // Hapus user
-        DB::table('user')->where('iduser', $id)->delete();
+        // Soft delete semua role_user terkait
+        DB::table('role_user')
+            ->where('iduser', $id)
+            ->update([
+                'deleted_at' => now(),
+                'deleted_by' => Auth::id()
+            ]);
 
         return redirect()->route('admin.user.index')
-            ->with('success', 'User berhasil dihapus.');
+            ->with('success', 'User berhasil dipindahkan ke trash.');
+    }
+
+    public function trash()
+    {
+        $users = DB::table('user')
+            ->leftJoin('user as deleter', 'user.deleted_by', '=', 'deleter.iduser')
+            ->select(
+                'user.*',
+                'deleter.nama as deleted_by_name'
+            )
+            ->whereNotNull('user.deleted_at')
+            ->orderBy('user.deleted_at', 'desc')
+            ->get();
+
+        return view('rshp.admin.DataMaster.user.trash', compact('users'));
+    }
+
+    public function restore($id)
+    {
+        // Restore user
+        DB::table('user')
+            ->where('iduser', $id)
+            ->update([
+                'deleted_at' => null,
+                'deleted_by' => null
+            ]);
+
+        // Restore role_user terkait
+        DB::table('role_user')
+            ->where('iduser', $id)
+            ->update([
+                'deleted_at' => null,
+                'deleted_by' => null
+            ]);
+
+        return redirect()->route('admin.user.trash')
+            ->with('success', 'User berhasil dikembalikan!');
+    }
+
+    public function forceDelete($id)
+    {
+        // Hard delete role_user dulu
+        DB::table('role_user')->where('iduser', $id)->delete();
+
+        // Hard delete user
+        DB::table('user')->where('iduser', $id)->delete();
+
+        return redirect()->route('admin.user.trash')
+            ->with('success', 'User berhasil dihapus permanen!');
     }
 }

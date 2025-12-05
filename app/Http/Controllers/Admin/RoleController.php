@@ -5,19 +5,23 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 
 class RoleController extends Controller
 {
     public function index()
     {
         $roles = DB::table('role')
-            ->leftJoin('role_user', 'role.idrole', '=', 'role_user.idrole')
-            ->leftJoin('user', 'role_user.iduser', '=', 'user.iduser')
+            ->leftJoin('role_user', function ($join) {
+                $join->on('role.idrole', '=', 'role_user.idrole')
+                    ->whereNull('role_user.deleted_at');
+            })
             ->select(
                 'role.idrole',
                 'role.nama_role',
                 DB::raw('COUNT(role_user.iduser) as jumlah_user')
             )
+            ->whereNull('role.deleted_at')
             ->groupBy('role.idrole', 'role.nama_role')
             ->orderBy('role.idrole', 'asc')
             ->get();
@@ -79,22 +83,67 @@ class RoleController extends Controller
 
     public function destroy($id)
     {
-        // Ganti juga di sini
-        $usedByUser = DB::table('user')->where('role_id', $id)->count();
+        $usedByUser = DB::table('role_user')
+            ->where('idrole', $id)
+            ->whereNull('deleted_at')
+            ->count();
 
         if ($usedByUser > 0) {
             return redirect()->route('admin.role.index')
                 ->with('error', 'Role tidak dapat dihapus karena sedang digunakan oleh user.');
         }
 
-        $deleted = DB::table('role')->where('idrole', $id)->delete();
-
-        if ($deleted) {
-            return redirect()->route('admin.role.index')
-                ->with('success', 'Role berhasil dihapus');
-        }
+        DB::table('role')->where('idrole', $id)->update([
+            'deleted_at' => now(),
+            'deleted_by' => Auth::id()
+        ]);
 
         return redirect()->route('admin.role.index')
-            ->with('error', 'Role tidak ditemukan atau gagal dihapus.');
+            ->with('success', 'Role berhasil dipindahkan ke trash');
+    }
+
+    // ✅ TAMBAHKAN TRASH, RESTORE, FORCE DELETE
+    public function trash()
+    {
+        $roles = DB::table('role')
+            ->leftJoin('user', 'role.deleted_by', '=', 'user.iduser')
+            ->select(
+                'role.*',
+                'user.nama as deleted_by_name'
+            )
+            ->whereNotNull('role.deleted_at')
+            ->orderBy('role.deleted_at', 'desc')
+            ->get();
+
+        return view('rshp.admin.DataMaster.role.trash', compact('roles'));
+    }
+
+    public function restore($id)
+    {
+        DB::table('role')->where('idrole', $id)->update([
+            'deleted_at' => null,
+            'deleted_by' => null
+        ]);
+
+        return redirect()->route('admin.role.trash')
+            ->with('success', 'Role berhasil dikembalikan!');
+    }
+
+    public function forceDelete($id)
+    {
+        // Cek apakah masih digunakan di role_user (termasuk yang di-trash)
+        $usedByUser = DB::table('role_user')
+            ->where('idrole', $id)
+            ->exists();
+
+        if ($usedByUser) {
+            return redirect()->route('admin.role.trash')
+                ->with('error', 'Tidak dapat menghapus permanen karena masih digunakan oleh user!');
+        }
+
+        DB::table('role')->where('idrole', $id)->delete();
+
+        return redirect()->route('admin.role.trash')
+            ->with('success', 'Role berhasil dihapus permanen!');
     }
 }

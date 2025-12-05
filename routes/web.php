@@ -80,6 +80,83 @@ Route::middleware(['isAdministrator'])->prefix('admin')->group(function () {
     // Data Master Routes
     Route::prefix('datamaster')->group(function () {
 
+        // ==================== JENIS HEWAN ====================
+        Route::prefix('datamaster/jenis-hewan')->group(function () {
+            Route::get('/trash', [JenisHewanController::class, 'trash'])->name('admin.jenis-hewan.trash');
+            Route::post('/{id}/restore', [JenisHewanController::class, 'restore'])->name('admin.jenis-hewan.restore');
+            Route::delete('/{id}/force-delete', [JenisHewanController::class, 'forceDelete'])->name('admin.jenis-hewan.force-delete');
+        });
+
+        // ==================== KATEGORI ====================
+        Route::prefix('datamaster/kategori')->group(function () {
+            Route::get('/trash', [KategoriController::class, 'trash'])->name('admin.kategori.trash');
+            Route::post('/{id}/restore', [KategoriController::class, 'restore'])->name('admin.kategori.restore');
+            Route::delete('/{id}/force-delete', [KategoriController::class, 'forceDelete'])->name('admin.kategori.force-delete');
+        });
+
+        // ==================== KATEGORI KLINIS ====================
+        Route::prefix('datamaster/kk')->group(function () {
+            Route::get('/trash', [KategoriKlinisController::class, 'trash'])->name('admin.kategori-klinis.trash');
+            Route::post('/{id}/restore', [KategoriKlinisController::class, 'restore'])->name('admin.kategori-klinis.restore');
+            Route::delete('/{id}/force-delete', [KategoriKlinisController::class, 'forceDelete'])->name('admin.kategori-klinis.force-delete');
+        });
+
+        // ==================== KODE TINDAKAN TERAPI ====================
+        Route::prefix('datamaster/ktt')->group(function () {
+            Route::get('/trash', [KodeTindakanTerapiController::class, 'trash'])->name('admin.kode-tindakan-terapi.trash');
+            Route::post('/{id}/restore', [KodeTindakanTerapiController::class, 'restore'])->name('admin.kode-tindakan-terapi.restore');
+            Route::delete('/{id}/force-delete', [KodeTindakanTerapiController::class, 'forceDelete'])->name('admin.kode-tindakan-terapi.force-delete');
+        });
+
+        // ==================== RAS HEWAN ====================
+        Route::prefix('datamaster/ras-hewan')->group(function () {
+            Route::get('/trash', [RasHewanController::class, 'trash'])->name('admin.ras-hewan.trash');
+            Route::post('/{id}/restore', [RasHewanController::class, 'restore'])->name('admin.ras-hewan.restore');
+            Route::delete('/{id}/force-delete', [RasHewanController::class, 'forceDelete'])->name('admin.ras-hewan.force-delete');
+        });
+
+        // ==================== ROLE ====================
+        Route::prefix('datamaster/role')->group(function () {
+            Route::get('/trash', [RoleController::class, 'trash'])->name('admin.role.trash');
+            Route::post('/{id}/restore', [RoleController::class, 'restore'])->name('admin.role.restore');
+            Route::delete('/{id}/force-delete', [RoleController::class, 'forceDelete'])->name('admin.role.force-delete');
+        });
+
+        // ==================== USER ====================
+        Route::prefix('datamaster/user')->group(function () {
+            Route::get('/trash', [UserController::class, 'trash'])->name('admin.user.trash');
+            Route::post('/{id}/restore', [UserController::class, 'restore'])->name('admin.user.restore');
+            Route::delete('/{id}/force-delete', [UserController::class, 'forceDelete'])->name('admin.user.force-delete');
+        });
+
+        // ==================== PEMILIK ====================
+        Route::prefix('datamaster/pemilik')->group(function () {
+            Route::get('/trash', [PemilikController::class, 'trash'])->name('admin.pemilik.trash');
+            Route::post('/{id}/restore', [PemilikController::class, 'restore'])->name('admin.pemilik.restore');
+            Route::delete('/{id}/force-delete', [PemilikController::class, 'forceDelete'])->name('admin.pemilik.force-delete');
+        });
+
+        // ==================== PET ====================
+        Route::prefix('datamaster/pet')->group(function () {
+            Route::get('/trash', [PetController::class, 'trash'])->name('admin.pet.trash');
+            Route::post('/{id}/restore', [PetController::class, 'restore'])->name('admin.pet.restore');
+            Route::delete('/{id}/force-delete', [PetController::class, 'forceDelete'])->name('admin.pet.force-delete');
+        });
+
+        // ==================== DOKTER ====================
+        Route::prefix('datamaster/dokter')->group(function () {
+            Route::get('/trash', [DokterController::class, 'trash'])->name('admin.dokter.trash');
+            Route::post('/{id}/restore', [DokterController::class, 'restore'])->name('admin.dokter.restore');
+            Route::delete('/{id}/force-delete', [DokterController::class, 'forceDelete'])->name('admin.dokter.force-delete');
+        });
+
+        // ==================== PERAWAT ====================
+        Route::prefix('datamaster/perawat')->group(function () {
+            Route::get('/trash', [PerawatController::class, 'trash'])->name('admin.perawat.trash');
+            Route::post('/{id}/restore', [PerawatController::class, 'restore'])->name('admin.perawat.restore');
+            Route::delete('/{id}/force-delete', [PerawatController::class, 'forceDelete'])->name('admin.perawat.force-delete');
+        });
+
         // User
         Route::resource('user', UserController::class)->names([
             'index' => 'admin.user.index',

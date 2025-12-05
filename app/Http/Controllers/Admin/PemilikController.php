@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 
 class PemilikController extends Controller
 {
@@ -20,6 +21,7 @@ class PemilikController extends Controller
                 'pemilik.alamat',
                 'pemilik.no_wa'
             )
+            ->whereNull('pemilik.deleted_at') // ✅ Tambahkan filter untuk data aktif
             ->orderBy('pemilik.idpemilik', 'asc')
             ->get();
 
@@ -31,7 +33,8 @@ class PemilikController extends Controller
         // Ambil user yang belum punya pemilik
         $users = DB::table('user')
             ->whereNotIn('iduser', function ($query) {
-                $query->select('iduser')->from('pemilik');
+                $query->select('iduser')->from('pemilik')
+                    ->whereNull('deleted_at'); // Hanya user dengan pemilik aktif
             })
             ->get();
 
@@ -65,6 +68,7 @@ class PemilikController extends Controller
                 'pemilik.no_wa'
             )
             ->where('pemilik.idpemilik', $id)
+            ->whereNull('pemilik.deleted_at')
             ->first();
 
         if (!$pemilik) {
@@ -114,16 +118,9 @@ class PemilikController extends Controller
 
     public function destroy($id)
     {
-        $pemilik = DB::table('pemilik')->where('idpemilik', $id)->first();
-
-        if (!$pemilik) {
-            return redirect()->route('admin.pemilik.index')
-                ->with('error', 'Pemilik tidak ditemukan.');
-        }
-
-        // Cek apakah pemilik masih punya pet
         $jumlahPet = DB::table('pet')
             ->where('idpemilik', $id)
+            ->whereNull('deleted_at')
             ->count();
 
         if ($jumlahPet > 0) {
@@ -131,10 +128,61 @@ class PemilikController extends Controller
                 ->with('error', 'Pemilik tidak dapat dihapus karena masih memiliki pet.');
         }
 
-        DB::table('pemilik')->where('idpemilik', $id)->delete();
+        DB::table('pemilik')->where('idpemilik', $id)->update([
+            'deleted_at' => now(),
+            'deleted_by' => Auth::id()
+        ]);
 
         return redirect()->route('admin.pemilik.index')
-            ->with('success', 'Pemilik berhasil dihapus.');
+            ->with('success', 'Pemilik berhasil dipindahkan ke trash.');
+    }
+
+    // ✅ TAMBAHKAN TRASH, RESTORE, FORCE DELETE
+    public function trash()
+    {
+        $pemiliks = DB::table('pemilik')
+            ->join('user', 'pemilik.iduser', '=', 'user.iduser')
+            ->leftJoin('user as deleter', 'pemilik.deleted_by', '=', 'deleter.iduser')
+            ->select(
+                'pemilik.*',
+                'user.nama',
+                'user.email',
+                'deleter.nama as deleted_by_name'
+            )
+            ->whereNotNull('pemilik.deleted_at')
+            ->orderBy('pemilik.deleted_at', 'desc')
+            ->get();
+
+        return view('rshp.admin.DataMaster.pemilik.trash', compact('pemiliks'));
+    }
+
+    public function restore($id)
+    {
+        DB::table('pemilik')->where('idpemilik', $id)->update([
+            'deleted_at' => null,
+            'deleted_by' => null
+        ]);
+
+        return redirect()->route('admin.pemilik.trash')
+            ->with('success', 'Pemilik berhasil dikembalikan!');
+    }
+
+    public function forceDelete($id)
+    {
+        // Cek apakah masih memiliki pet (termasuk yang di-trash)
+        $jumlahPet = DB::table('pet')
+            ->where('idpemilik', $id)
+            ->exists();
+
+        if ($jumlahPet > 0) {
+            return redirect()->route('admin.pemilik.trash')
+                ->with('error', 'Tidak dapat menghapus permanen karena masih memiliki data pet!');
+        }
+
+        DB::table('pemilik')->where('idpemilik', $id)->delete();
+
+        return redirect()->route('admin.pemilik.trash')
+            ->with('success', 'Pemilik berhasil dihapus permanen!');
     }
 
     // ==================== VALIDASI & HELPER ====================
@@ -142,8 +190,8 @@ class PemilikController extends Controller
     protected function validatePemilik(Request $request, $id = null)
     {
         $userUniqueRule = $id
-            ? 'unique:pemilik,iduser,' . $id . ',idpemilik'
-            : 'unique:pemilik,iduser';
+            ? 'unique:pemilik,iduser,' . $id . ',idpemilik,deleted_at,NULL'
+            : 'unique:pemilik,iduser,NULL,idpemilik,deleted_at,NULL';
 
         return $request->validate([
             'iduser' => [

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Models\Pet;
+use Illuminate\Support\Facades\Auth;
 
 class PetController extends Controller
 {
@@ -28,6 +29,7 @@ class PetController extends Controller
                 'ras_hewan.nama_ras',
                 'jenis_hewan.nama_jenis_hewan'
             )
+            ->whereNull('pet.deleted_at')
             ->orderBy('pet.idpet', 'desc')
             ->get();
 
@@ -45,6 +47,7 @@ class PetController extends Controller
                 'user.email',
                 'pemilik.alamat'
             )
+            ->whereNull('pemilik.deleted_at')
             ->orderBy('user.nama', 'asc')
             ->get();
 
@@ -55,6 +58,8 @@ class PetController extends Controller
                 'ras_hewan.nama_ras',
                 'jenis_hewan.nama_jenis_hewan'
             )
+            ->whereNull('ras_hewan.deleted_at')
+            ->whereNull('jenis_hewan.deleted_at')
             ->orderBy('ras_hewan.nama_ras', 'asc')
             ->get();
 
@@ -95,12 +100,15 @@ class PetController extends Controller
                 'jenis_hewan.nama_jenis_hewan'
             )
             ->where('pet.idpet', $id)
+            ->whereNull('pet.deleted_at')
             ->first();
 
         // Ambil semua ras hewan
         $rasHewan = DB::table('ras_hewan')
             ->leftJoin('jenis_hewan', 'ras_hewan.idjenis_hewan', '=', 'jenis_hewan.idjenis_hewan')
             ->select('ras_hewan.idras_hewan', 'ras_hewan.nama_ras', 'jenis_hewan.nama_jenis_hewan')
+            ->whereNull('ras_hewan.deleted_at')
+            ->whereNull('jenis_hewan.deleted_at')
             ->orderBy('ras_hewan.nama_ras', 'asc')
             ->get();
 
@@ -108,6 +116,7 @@ class PetController extends Controller
         $pemilik = DB::table('pemilik')
             ->join('user', 'pemilik.iduser', '=', 'user.iduser')
             ->select('pemilik.idpemilik', 'user.nama', 'user.email')
+            ->whereNull('pemilik.deleted_at')
             ->get();
 
         return view('rshp.admin.DataMaster.pet.edit', compact('pet', 'rasHewan', 'pemilik'));
@@ -137,34 +146,86 @@ class PetController extends Controller
 
     public function destroy($id)
     {
-        try {
-            $pet = Pet::findOrFail($id);
-            
-            // Cek apakah pet memiliki relasi dengan temu_dokter
-            $hasTemuDokter = DB::table('temu_dokter')
-                ->where('idpet', $id)
-                ->exists();
-                
-            // Cek apakah pet memiliki relasi dengan rekam_medis
-            $hasRekamMedis = DB::table('rekam_medis')
-                ->where('idpet', $id)
-                ->exists();
-            
-            if ($hasTemuDokter || $hasRekamMedis) {
-                return redirect()->route('admin.pet.index')
-                    ->with('error', 'Pet tidak dapat dihapus karena masih memiliki data antrian atau rekam medis!');
-            }
-            
-            // Jika tidak ada relasi, hapus pet
-            $pet->delete();
-            
+        $hasTemuDokter = DB::table('temu_dokter')
+            ->where('idpet', $id)
+            ->whereNull('deleted_at')
+            ->exists();
+
+        $hasRekamMedis = DB::table('rekam_medis')
+            ->where('idpet', $id)
+            ->whereNull('deleted_at')
+            ->exists();
+
+        if ($hasTemuDokter || $hasRekamMedis) {
             return redirect()->route('admin.pet.index')
-                ->with('success', 'Pet berhasil dihapus!');
-                
-        } catch (\Exception $e) {
-            return redirect()->back()
-                ->with('error', 'Gagal menghapus pet: ' . $e->getMessage());
+                ->with('error', 'Pet tidak dapat dihapus karena masih memiliki data antrian atau rekam medis!');
         }
+
+        DB::table('pet')->where('idpet', $id)->update([
+            'deleted_at' => now(),
+            'deleted_by' => Auth::id()
+        ]);
+
+        return redirect()->route('admin.pet.index')
+            ->with('success', 'Pet berhasil dipindahkan ke trash!');
+    }
+
+    // ✅ TAMBAHKAN TRASH, RESTORE, FORCE DELETE
+    public function trash()
+    {
+        $pets = DB::table('pet')
+            ->leftJoin('pemilik', 'pet.idpemilik', '=', 'pemilik.idpemilik')
+            ->leftJoin('user', 'pemilik.iduser', '=', 'user.iduser')
+            ->leftJoin('ras_hewan', 'pet.idras_hewan', '=', 'ras_hewan.idras_hewan')
+            ->leftJoin('jenis_hewan', 'ras_hewan.idjenis_hewan', '=', 'jenis_hewan.idjenis_hewan')
+            ->leftJoin('user as deleter', 'pet.deleted_by', '=', 'deleter.iduser')
+            ->select(
+                'pet.*',
+                'pet.nama as nama_pet',
+                'user.nama as nama_pemilik',
+                'user.email as email_pemilik',
+                'ras_hewan.nama_ras',
+                'jenis_hewan.nama_jenis_hewan',
+                'deleter.nama as deleted_by_name'
+            )
+            ->whereNotNull('pet.deleted_at')
+            ->orderBy('pet.deleted_at', 'desc')
+            ->get();
+
+        return view('rshp.admin.DataMaster.pet.trash', compact('pets'));
+    }
+
+    public function restore($id)
+    {
+        DB::table('pet')->where('idpet', $id)->update([
+            'deleted_at' => null,
+            'deleted_by' => null
+        ]);
+
+        return redirect()->route('admin.pet.trash')
+            ->with('success', 'Pet berhasil dikembalikan!');
+    }
+
+    public function forceDelete($id)
+    {
+        // Cek apakah masih punya data terkait
+        $hasTemuDokter = DB::table('temu_dokter')
+            ->where('idpet', $id)
+            ->exists();
+
+        $hasRekamMedis = DB::table('rekam_medis')
+            ->where('idpet', $id)
+            ->exists();
+
+        if ($hasTemuDokter || $hasRekamMedis) {
+            return redirect()->route('admin.pet.trash')
+                ->with('error', 'Tidak dapat menghapus permanen karena masih memiliki data terkait!');
+        }
+
+        DB::table('pet')->where('idpet', $id)->delete();
+
+        return redirect()->route('admin.pet.trash')
+            ->with('success', 'Pet berhasil dihapus permanen!');
     }
 
     // ==================== HELPER METHODS ====================

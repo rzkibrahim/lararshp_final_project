@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 
 class PerawatController extends Controller
 {
@@ -24,6 +25,7 @@ class PerawatController extends Controller
                 'r.nama_role'
             )
             ->where('ru.idrole', 3) // 3 = Perawat
+            ->whereNull('ru.deleted_at') // Tambahkan filter untuk data aktif
             ->orderBy('ru.idrole_user', 'desc')
             ->get();
 
@@ -38,7 +40,8 @@ class PerawatController extends Controller
                 $query->select('iduser')
                     ->from('role_user')
                     ->where('idrole', 3)
-                    ->where('status', 1);
+                    ->where('status', 1)
+                    ->whereNull('deleted_at');
             })
             ->orderBy('nama', 'asc')
             ->get();
@@ -57,8 +60,9 @@ class PerawatController extends Controller
                         ->where('iduser', $value)
                         ->where('idrole', 3)
                         ->where('status', 1)
+                        ->whereNull('deleted_at')
                         ->exists();
-                    
+
                     if ($exists) {
                         $fail('User ini sudah terdaftar sebagai perawat.');
                     }
@@ -96,6 +100,7 @@ class PerawatController extends Controller
             )
             ->where('ru.idrole_user', $id)
             ->where('ru.idrole', 3)
+            ->whereNull('ru.deleted_at')
             ->first();
 
         if (!$perawat) {
@@ -124,6 +129,7 @@ class PerawatController extends Controller
         $roleUser = DB::table('role_user')
             ->where('idrole_user', $id)
             ->where('idrole', 3)
+            ->whereNull('deleted_at')
             ->first();
 
         if (!$roleUser) {
@@ -155,6 +161,7 @@ class PerawatController extends Controller
         $roleUser = DB::table('role_user')
             ->where('idrole_user', $id)
             ->where('idrole', 3)
+            ->whereNull('deleted_at')
             ->first();
 
         if (!$roleUser) {
@@ -165,6 +172,7 @@ class PerawatController extends Controller
         // Cek apakah perawat masih punya rekam medis yang dibuat
         $jumlahRekamMedis = DB::table('rekam_medis')
             ->where('dokter_pemeriksa', $id) // Jika perawat juga bisa jadi pemeriksa
+            ->whereNull('deleted_at')
             ->count();
 
         if ($jumlahRekamMedis > 0) {
@@ -172,12 +180,75 @@ class PerawatController extends Controller
                 ->with('error', 'Perawat tidak dapat dihapus karena masih memiliki rekam medis.');
         }
 
-        // Soft delete: ubah status jadi 0
-        DB::table('role_user')
-            ->where('idrole_user', $id)
-            ->update(['status' => 0]);
+        // Soft delete role_user
+        DB::table('role_user')->where('idrole_user', $id)->update([
+            'deleted_at' => now(),
+            'deleted_by' => Auth::id()
+        ]);
 
         return redirect()->route('admin.perawat.index')
-            ->with('success', 'Perawat berhasil dinonaktifkan.');
+            ->with('success', 'Perawat berhasil dipindahkan ke trash.');
+    }
+
+    // ✅ TAMBAHKAN TRASH, RESTORE, FORCE DELETE
+    public function trash()
+    {
+        $perawats = DB::table('role_user as ru')
+            ->join('user as u', 'ru.iduser', '=', 'u.iduser')
+            ->join('role as r', 'ru.idrole', '=', 'r.idrole')
+            ->leftJoin('user as deleter', 'ru.deleted_by', '=', 'deleter.iduser')
+            ->select(
+                'ru.*',
+                'u.nama',
+                'u.email',
+                'r.nama_role',
+                'deleter.nama as deleted_by_name'
+            )
+            ->where('ru.idrole', 3)
+            ->whereNotNull('ru.deleted_at')
+            ->orderBy('ru.deleted_at', 'desc')
+            ->get();
+
+        return view('rshp.admin.DataMaster.perawat.trash', compact('perawats'));
+    }
+
+    public function restore($id)
+    {
+        $roleUser = DB::table('role_user')
+            ->where('idrole_user', $id)
+            ->where('idrole', 3)
+            ->whereNotNull('deleted_at')
+            ->first();
+
+        if (!$roleUser) {
+            return redirect()->route('admin.perawat.trash')
+                ->with('error', 'Data perawat tidak ditemukan di trash.');
+        }
+
+        DB::table('role_user')->where('idrole_user', $id)->update([
+            'deleted_at' => null,
+            'deleted_by' => null
+        ]);
+
+        return redirect()->route('admin.perawat.trash')
+            ->with('success', 'Perawat berhasil dikembalikan!');
+    }
+
+    public function forceDelete($id)
+    {
+        // Cek apakah masih punya rekam medis
+        $jumlahRekamMedis = DB::table('rekam_medis')
+            ->where('dokter_pemeriksa', $id)
+            ->exists();
+
+        if ($jumlahRekamMedis > 0) {
+            return redirect()->route('admin.perawat.trash')
+                ->with('error', 'Tidak dapat menghapus permanen karena masih memiliki rekam medis!');
+        }
+
+        DB::table('role_user')->where('idrole_user', $id)->delete();
+
+        return redirect()->route('admin.perawat.trash')
+            ->with('success', 'Perawat berhasil dihapus permanen!');
     }
 }

@@ -5,12 +5,12 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 
 class KodeTindakanTerapiController extends Controller
 {
     public function index()
     {
-        // Ambil semua data dengan join ke tabel kategori dan kategori_klinis
         $tindakanTerapi = DB::table('kode_tindakan_terapi')
             ->leftJoin('kategori', 'kode_tindakan_terapi.idkategori', '=', 'kategori.idkategori')
             ->leftJoin('kategori_klinis', 'kode_tindakan_terapi.idkategori_klinis', '=', 'kategori_klinis.idkategori_klinis')
@@ -21,6 +21,7 @@ class KodeTindakanTerapiController extends Controller
                 'kategori.nama_kategori',
                 'kategori_klinis.nama_kategori_klinis'
             )
+            ->whereNull('kode_tindakan_terapi.deleted_at')
             ->orderBy('kode_tindakan_terapi.idkode_tindakan_terapi', 'asc')
             ->get();
 
@@ -110,15 +111,71 @@ class KodeTindakanTerapiController extends Controller
 
     public function destroy($id)
     {
-        $tindakanTerapi = DB::table('kode_tindakan_terapi')->where('idkode_tindakan_terapi', $id)->first();
-        if (!$tindakanTerapi) {
+        $digunakan = DB::table('detail_rekam_medis')
+            ->where('idkode_tindakan_terapi', $id)
+            ->whereNull('deleted_at')
+            ->exists();
+
+        if ($digunakan) {
             return redirect()->route('admin.kode-tindakan-terapi.index')
-                ->with('error', 'Data tidak ditemukan.');
+                ->with('error', 'Kode tindakan tidak dapat dihapus karena sedang digunakan.');
+        }
+
+        DB::table('kode_tindakan_terapi')->where('idkode_tindakan_terapi', $id)->update([
+            'deleted_at' => now(),
+            'deleted_by' => Auth::id()
+        ]);
+
+        return redirect()->route('admin.kode-tindakan-terapi.index')
+            ->with('success', 'Kode tindakan berhasil dipindahkan ke trash.');
+    }
+
+    // ✅ TAMBAHKAN TRASH, RESTORE, FORCE DELETE
+    public function trash()
+    {
+        $tindakanTerapi = DB::table('kode_tindakan_terapi')
+            ->leftJoin('kategori', 'kode_tindakan_terapi.idkategori', '=', 'kategori.idkategori')
+            ->leftJoin('kategori_klinis', 'kode_tindakan_terapi.idkategori_klinis', '=', 'kategori_klinis.idkategori_klinis')
+            ->leftJoin('user', 'kode_tindakan_terapi.deleted_by', '=', 'user.iduser')
+            ->select(
+                'kode_tindakan_terapi.*',
+                'kategori.nama_kategori',
+                'kategori_klinis.nama_kategori_klinis',
+                'user.nama as deleted_by_name'
+            )
+            ->whereNotNull('kode_tindakan_terapi.deleted_at')
+            ->orderBy('kode_tindakan_terapi.deleted_at', 'desc')
+            ->get();
+
+        return view('rshp.admin.DataMaster.kode-tindakan-terapi.trash', compact('tindakanTerapi'));
+    }
+
+    public function restore($id)
+    {
+        DB::table('kode_tindakan_terapi')->where('idkode_tindakan_terapi', $id)->update([
+            'deleted_at' => null,
+            'deleted_by' => null
+        ]);
+
+        return redirect()->route('admin.kode-tindakan-terapi.trash')
+            ->with('success', 'Kode Tindakan/Terapi berhasil dikembalikan!');
+    }
+
+    public function forceDelete($id)
+    {
+        // Cek apakah masih digunakan di detail rekam medis
+        $digunakan = DB::table('detail_rekam_medis')
+            ->where('idkode_tindakan_terapi', $id)
+            ->exists();
+
+        if ($digunakan) {
+            return redirect()->route('admin.kode-tindakan-terapi.trash')
+                ->with('error', 'Tidak dapat menghapus permanen karena masih digunakan di rekam medis!');
         }
 
         DB::table('kode_tindakan_terapi')->where('idkode_tindakan_terapi', $id)->delete();
 
-        return redirect()->route('admin.kode-tindakan-terapi.index')
-            ->with('success', 'Kode Tindakan/Terapi berhasil dihapus.');
+        return redirect()->route('admin.kode-tindakan-terapi.trash')
+            ->with('success', 'Kode Tindakan/Terapi berhasil dihapus permanen!');
     }
 }

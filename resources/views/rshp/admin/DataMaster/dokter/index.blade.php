@@ -22,14 +22,31 @@
     {{-- Card --}}
     <div class="bg-white rounded-xl shadow-lg overflow-hidden">
         {{-- Header --}}
-        <div class="bg-gradient-to-r from-blue-700 to-blue-600 px-6 py-4 flex justify-between items-center">
-            <h2 class="text-xl font-semibold text-white">Data Dokter</h2>
-            <div class="flex items-center space-x-4">
-                <span class="text-blue-100">Total: {{ $dokters->count() }} dokter</span>
-                <a href="{{ route('admin.dokter.create') }}"
-                   class="bg-white text-blue-700 px-4 py-2 rounded-lg hover:bg-blue-50 transition duration-200">
-                    <i class="fas fa-plus mr-2"></i>Tambah Data
-                </a>
+        <div class="bg-gradient-to-r from-blue-700 to-blue-600 px-6 py-4">
+            <div class="flex justify-between items-center">
+                <h2 class="text-xl font-semibold text-white">Data Dokter</h2>
+                <div class="flex items-center space-x-4">
+                    <span class="text-blue-100">Total: {{ $dokters->count() }} dokter</span>
+                    
+                    {{-- ✅ TOMBOL TRASH --}}
+                    <a href="{{ route('admin.dokter.trash') }}"
+                       class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition duration-200">
+                        <i class="fas fa-trash mr-2"></i>Trash
+                        @php
+                            $trashCount = DB::table('role_user')->where('idrole', 3)->whereNotNull('deleted_at')->count();
+                        @endphp
+                        @if($trashCount > 0)
+                            <span class="ml-1 bg-white text-red-600 px-2 py-0.5 rounded-full text-xs font-bold">
+                                {{ $trashCount }}
+                            </span>
+                        @endif
+                    </a>
+
+                    <a href="{{ route('admin.dokter.create') }}"
+                       class="bg-white text-blue-700 px-4 py-2 rounded-lg hover:bg-blue-50 transition duration-200">
+                        <i class="fas fa-plus mr-2"></i>Tambah Data
+                    </a>
+                </div>
             </div>
         </div>
 
@@ -82,21 +99,22 @@
                                         <i class="fas fa-edit mr-1"></i>Edit
                                     </a>
 
+                                    {{-- ✅ SOFT DELETE - Pindah ke Trash --}}
                                     @if(!$punyaRekamMedis)
                                         <form action="{{ route('admin.dokter.destroy', $dokter->idrole_user) }}"
                                               method="POST"
-                                              onsubmit="return confirm('Apakah Anda yakin ingin menonaktifkan dokter ini?')">
+                                              onsubmit="return confirm('Data akan dipindahkan ke trash. Lanjutkan?')">
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit"
-                                                    class="px-3 py-1 text-sm text-white bg-red-600 rounded-lg hover:bg-red-700 transition duration-200">
-                                                <i class="fas fa-ban mr-1"></i>Nonaktifkan
+                                                    class="px-3 py-1 text-sm text-white bg-orange-500 rounded-lg hover:bg-orange-600 transition duration-200">
+                                                <i class="fas fa-trash mr-1"></i>Hapus
                                             </button>
                                         </form>
                                     @else
                                         <button disabled
                                                 class="px-3 py-1 text-sm text-gray-400 bg-gray-200 rounded-lg cursor-not-allowed"
-                                                title="Dokter ini memiliki rekam medis, tidak bisa dinonaktifkan">
+                                                title="Dokter ini memiliki rekam medis, tidak bisa dihapus">
                                             <i class="fas fa-lock mr-1"></i>Terkunci
                                         </button>
                                     @endif
@@ -118,6 +136,15 @@
                 </tbody>
             </table>
         </div>
+
+        @if($dokters->count() > 0)
+        <div class="p-4 bg-gray-50 border-t border-gray-200 text-sm text-gray-700 flex justify-between items-center">
+            <span>Menampilkan <span class="font-medium">{{ $dokters->count() }}</span> data aktif</span>
+            <a href="{{ route('admin.dokter.trash') }}" class="text-red-600 hover:text-red-800">
+                <i class="fas fa-trash mr-1"></i>Lihat Trash
+            </a>
+        </div>
+        @endif
     </div>
 </div>
 @endsection
