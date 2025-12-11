@@ -23,6 +23,12 @@
           <a href="{{ route('admin.kode-tindakan-terapi.index') }}" class="flex items-center px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600">
             <i class="fas fa-syringe mr-2"></i> Kode Tindakan & Terapi
           </a>
+          <a href="{{ route('admin.temu-dokter.index') }}" class="flex items-center px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600">
+            <i class="fas fa-syringe mr-2"></i> Temu Dokter
+          </a>
+          <a href="{{ route('admin.rekam-medis.index') }}" class="flex items-center px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600">
+            <i class="fas fa-syringe mr-2"></i> Rekam Medis
+          </a>
           <a href="{{ route('admin.pemilik.index') }}" class="flex items-center px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600">
             <i class="fas fa-users mr-2"></i> Pemilik
           </a>

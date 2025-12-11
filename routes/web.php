@@ -15,6 +15,8 @@ use App\Http\Controllers\Admin\PemilikController;
 use App\Http\Controllers\Admin\PetController;
 use App\Http\Controllers\Admin\DokterController;
 use App\Http\Controllers\Admin\PerawatController;
+use App\Http\Controllers\Admin\RekamMedisController;
+use App\Http\Controllers\Admin\TemuDokterAdminController;
 
 use App\Http\Controllers\Dokter\DashboardDokterController;
 use App\Http\Controllers\Dokter\RekamMedisDocController;
@@ -72,204 +74,259 @@ Route::get('/check-auth', function () {
 |--------------------------------------------------------------------------
 */
 
-Route::middleware(['isAdministrator'])->prefix('admin')->group(function () {
+Route::middleware(['isAdministrator'])->prefix('admin')->name('admin.')->group(function () {
 
     // Dashboard
-    Route::get('/dashboard', [DashboardAdminController::class, 'index'])->name('admin.dashboard');
+    Route::get('/dashboard', [DashboardAdminController::class, 'index'])->name('dashboard');
 
     // Data Master Routes
     Route::prefix('datamaster')->group(function () {
 
         // ==================== JENIS HEWAN ====================
-        Route::prefix('datamaster/jenis-hewan')->group(function () {
-            Route::get('/trash', [JenisHewanController::class, 'trash'])->name('admin.jenis-hewan.trash');
-            Route::post('/{id}/restore', [JenisHewanController::class, 'restore'])->name('admin.jenis-hewan.restore');
-            Route::delete('/{id}/force-delete', [JenisHewanController::class, 'forceDelete'])->name('admin.jenis-hewan.force-delete');
+        Route::prefix('jenis-hewan')->group(function () {
+            Route::get('/trash', [JenisHewanController::class, 'trash'])->name('jenis-hewan.trash');
+            Route::post('/{id}/restore', [JenisHewanController::class, 'restore'])->name('jenis-hewan.restore');
+            Route::delete('/{id}/force-delete', [JenisHewanController::class, 'forceDelete'])->name('jenis-hewan.force-delete');
         });
 
         // ==================== KATEGORI ====================
-        Route::prefix('datamaster/kategori')->group(function () {
-            Route::get('/trash', [KategoriController::class, 'trash'])->name('admin.kategori.trash');
-            Route::post('/{id}/restore', [KategoriController::class, 'restore'])->name('admin.kategori.restore');
-            Route::delete('/{id}/force-delete', [KategoriController::class, 'forceDelete'])->name('admin.kategori.force-delete');
+        Route::prefix('kategori')->group(function () {
+            Route::get('/trash', [KategoriController::class, 'trash'])->name('kategori.trash');
+            Route::post('/{id}/restore', [KategoriController::class, 'restore'])->name('kategori.restore');
+            Route::delete('/{id}/force-delete', [KategoriController::class, 'forceDelete'])->name('kategori.force-delete');
         });
 
         // ==================== KATEGORI KLINIS ====================
-        Route::prefix('datamaster/kk')->group(function () {
-            Route::get('/trash', [KategoriKlinisController::class, 'trash'])->name('admin.kategori-klinis.trash');
-            Route::post('/{id}/restore', [KategoriKlinisController::class, 'restore'])->name('admin.kategori-klinis.restore');
-            Route::delete('/{id}/force-delete', [KategoriKlinisController::class, 'forceDelete'])->name('admin.kategori-klinis.force-delete');
+        Route::prefix('kk')->group(function () {
+            Route::get('/trash', [KategoriKlinisController::class, 'trash'])->name('kategori-klinis.trash');
+            Route::post('/{id}/restore', [KategoriKlinisController::class, 'restore'])->name('kategori-klinis.restore');
+            Route::delete('/{id}/force-delete', [KategoriKlinisController::class, 'forceDelete'])->name('kategori-klinis.force-delete');
         });
 
         // ==================== KODE TINDAKAN TERAPI ====================
-        Route::prefix('datamaster/ktt')->group(function () {
-            Route::get('/trash', [KodeTindakanTerapiController::class, 'trash'])->name('admin.kode-tindakan-terapi.trash');
-            Route::post('/{id}/restore', [KodeTindakanTerapiController::class, 'restore'])->name('admin.kode-tindakan-terapi.restore');
-            Route::delete('/{id}/force-delete', [KodeTindakanTerapiController::class, 'forceDelete'])->name('admin.kode-tindakan-terapi.force-delete');
+        Route::prefix('ktt')->group(function () {
+            Route::get('/trash', [KodeTindakanTerapiController::class, 'trash'])->name('kode-tindakan-terapi.trash');
+            Route::post('/{id}/restore', [KodeTindakanTerapiController::class, 'restore'])->name('kode-tindakan-terapi.restore');
+            Route::delete('/{id}/force-delete', [KodeTindakanTerapiController::class, 'forceDelete'])->name('kode-tindakan-terapi.force-delete');
         });
 
         // ==================== RAS HEWAN ====================
-        Route::prefix('datamaster/ras-hewan')->group(function () {
-            Route::get('/trash', [RasHewanController::class, 'trash'])->name('admin.ras-hewan.trash');
-            Route::post('/{id}/restore', [RasHewanController::class, 'restore'])->name('admin.ras-hewan.restore');
-            Route::delete('/{id}/force-delete', [RasHewanController::class, 'forceDelete'])->name('admin.ras-hewan.force-delete');
+        Route::prefix('ras-hewan')->group(function () {
+            Route::get('/trash', [RasHewanController::class, 'trash'])->name('ras-hewan.trash');
+            Route::post('/{id}/restore', [RasHewanController::class, 'restore'])->name('ras-hewan.restore');
+            Route::delete('/{id}/force-delete', [RasHewanController::class, 'forceDelete'])->name('ras-hewan.force-delete');
         });
 
         // ==================== ROLE ====================
-        Route::prefix('datamaster/role')->group(function () {
-            Route::get('/trash', [RoleController::class, 'trash'])->name('admin.role.trash');
-            Route::post('/{id}/restore', [RoleController::class, 'restore'])->name('admin.role.restore');
-            Route::delete('/{id}/force-delete', [RoleController::class, 'forceDelete'])->name('admin.role.force-delete');
+        Route::prefix('role')->group(function () {
+            Route::get('/trash', [RoleController::class, 'trash'])->name('role.trash');
+            Route::post('/{id}/restore', [RoleController::class, 'restore'])->name('role.restore');
+            Route::delete('/{id}/force-delete', [RoleController::class, 'forceDelete'])->name('role.force-delete');
         });
 
         // ==================== USER ====================
-        Route::prefix('datamaster/user')->group(function () {
-            Route::get('/trash', [UserController::class, 'trash'])->name('admin.user.trash');
-            Route::post('/{id}/restore', [UserController::class, 'restore'])->name('admin.user.restore');
-            Route::delete('/{id}/force-delete', [UserController::class, 'forceDelete'])->name('admin.user.force-delete');
+        Route::prefix('user')->group(function () {
+            Route::get('/trash', [UserController::class, 'trash'])->name('user.trash');
+            Route::post('/{id}/restore', [UserController::class, 'restore'])->name('user.restore');
+            Route::delete('/{id}/force-delete', [UserController::class, 'forceDelete'])->name('user.force-delete');
         });
 
         // ==================== PEMILIK ====================
-        Route::prefix('datamaster/pemilik')->group(function () {
-            Route::get('/trash', [PemilikController::class, 'trash'])->name('admin.pemilik.trash');
-            Route::post('/{id}/restore', [PemilikController::class, 'restore'])->name('admin.pemilik.restore');
-            Route::delete('/{id}/force-delete', [PemilikController::class, 'forceDelete'])->name('admin.pemilik.force-delete');
+        Route::prefix('pemilik')->group(function () {
+            Route::get('/trash', [PemilikController::class, 'trash'])->name('pemilik.trash');
+            Route::post('/{id}/restore', [PemilikController::class, 'restore'])->name('pemilik.restore');
+            Route::delete('/{id}/force-delete', [PemilikController::class, 'forceDelete'])->name('pemilik.force-delete');
         });
 
         // ==================== PET ====================
-        Route::prefix('datamaster/pet')->group(function () {
-            Route::get('/trash', [PetController::class, 'trash'])->name('admin.pet.trash');
-            Route::post('/{id}/restore', [PetController::class, 'restore'])->name('admin.pet.restore');
-            Route::delete('/{id}/force-delete', [PetController::class, 'forceDelete'])->name('admin.pet.force-delete');
+        Route::prefix('pet')->group(function () {
+            Route::get('/trash', [PetController::class, 'trash'])->name('pet.trash');
+            Route::post('/{id}/restore', [PetController::class, 'restore'])->name('pet.restore');
+            Route::delete('/{id}/force-delete', [PetController::class, 'forceDelete'])->name('pet.force-delete');
         });
 
         // ==================== DOKTER ====================
-        Route::prefix('datamaster/dokter')->group(function () {
-            Route::get('/trash', [DokterController::class, 'trash'])->name('admin.dokter.trash');
-            Route::post('/{id}/restore', [DokterController::class, 'restore'])->name('admin.dokter.restore');
-            Route::delete('/{id}/force-delete', [DokterController::class, 'forceDelete'])->name('admin.dokter.force-delete');
+        Route::prefix('dokter')->group(function () {
+            Route::get('/trash', [DokterController::class, 'trash'])->name('dokter.trash');
+            Route::post('/{id}/restore', [DokterController::class, 'restore'])->name('dokter.restore');
+            Route::delete('/{id}/force-delete', [DokterController::class, 'forceDelete'])->name('dokter.force-delete');
         });
 
         // ==================== PERAWAT ====================
-        Route::prefix('datamaster/perawat')->group(function () {
-            Route::get('/trash', [PerawatController::class, 'trash'])->name('admin.perawat.trash');
-            Route::post('/{id}/restore', [PerawatController::class, 'restore'])->name('admin.perawat.restore');
-            Route::delete('/{id}/force-delete', [PerawatController::class, 'forceDelete'])->name('admin.perawat.force-delete');
+        Route::prefix('perawat')->group(function () {
+            Route::get('/trash', [PerawatController::class, 'trash'])->name('perawat.trash');
+            Route::post('/{id}/restore', [PerawatController::class, 'restore'])->name('perawat.restore');
+            Route::delete('/{id}/force-delete', [PerawatController::class, 'forceDelete'])->name('perawat.force-delete');
+        });
+
+        // ===================== TEMU DOKTER =====================
+        Route::prefix('temu-dokter')->name('temu-dokter.')->group(function () {
+            Route::get('/', [TemuDokterAdminController::class, 'index'])->name('index');
+            Route::post('/store', [TemuDokterAdminController::class, 'store'])->name('store');
+            Route::get('/edit/{id}', [TemuDokterAdminController::class, 'edit'])->name('edit');
+            Route::put('/update/{id}', [TemuDokterAdminController::class, 'update'])->name('update');
+            Route::post('/update-status', [TemuDokterAdminController::class, 'updateStatus'])->name('update-status');
+            Route::delete('/destroy/{id}', [TemuDokterAdminController::class, 'destroy'])->name('destroy');
+            
+            // Trash Routes
+            Route::get('/trash', [TemuDokterAdminController::class, 'trash'])->name('trash');
+            Route::post('/restore/{id}', [TemuDokterAdminController::class, 'restore'])->name('restore');
+            Route::delete('/force-delete/{id}', [TemuDokterAdminController::class, 'forceDelete'])->name('force-delete');
+        });
+
+        // ===================== REKAM MEDIS ======================
+        Route::prefix('rekam-medis')->name('rekam-medis.')->group(function () {
+            // CRUD Routes
+            Route::get('/', [RekamMedisController::class, 'index'])->name('index');
+            Route::get('/create/{idReservasi}/{idPet}', [RekamMedisController::class, 'create'])->name('create');
+            Route::post('/store', [RekamMedisController::class, 'store'])->name('store');
+            Route::get('/detail/{id}', [RekamMedisController::class, 'detail'])->name('detail');
+            Route::put('/update-header/{id}', [RekamMedisController::class, 'updateHeader'])->name('update-header');
+            Route::delete('/destroy/{id}', [RekamMedisController::class, 'destroy'])->name('destroy');
+
+            // Detail Tindakan Routes
+            Route::post('/detail/{id}/create', [RekamMedisController::class, 'createDetail'])->name('create-detail');
+            Route::put('/detail/{id}/update/{idDetail}', [RekamMedisController::class, 'updateDetail'])->name('update-detail');
+            Route::delete('/detail/{id}/delete/{idDetail}', [RekamMedisController::class, 'deleteDetail'])->name('delete-detail');
+
+            // Trash Routes
+            Route::get('/trash', [RekamMedisController::class, 'trash'])->name('trash');
+            Route::post('/restore/{id}', [RekamMedisController::class, 'restore'])->name('restore');
+            Route::delete('/force-delete/{id}', [RekamMedisController::class, 'forceDelete'])->name('force-delete');
         });
 
         // User
         Route::resource('user', UserController::class)->names([
-            'index' => 'admin.user.index',
-            'create' => 'admin.user.create',
-            'store' => 'admin.user.store',
-            'edit' => 'admin.user.edit',
-            'update' => 'admin.user.update',
-            'destroy' => 'admin.user.destroy',
+            'index' => 'user.index',
+            'create' => 'user.create',
+            'store' => 'user.store',
+            'edit' => 'user.edit',
+            'update' => 'user.update',
+            'destroy' => 'user.destroy',
         ]);
 
         // ✅ TAMBAHKAN ROUTE INI - Reset Password
         Route::post('user/{id}/reset-password', [UserController::class, 'resetPassword'])
-            ->name('admin.user.reset-password');
-
+            ->name('user.reset-password');
 
         // Pemilik
         Route::resource('pemilik', PemilikController::class)->names([
-            'index' => 'admin.pemilik.index',
-            'create' => 'admin.pemilik.create',
-            'store' => 'admin.pemilik.store',
-            'edit' => 'admin.pemilik.edit',
-            'update' => 'admin.pemilik.update',
-            'destroy' => 'admin.pemilik.destroy',
+            'index' => 'pemilik.index',
+            'create' => 'pemilik.create',
+            'store' => 'pemilik.store',
+            'edit' => 'pemilik.edit',
+            'update' => 'pemilik.update',
+            'destroy' => 'pemilik.destroy',
         ]);
 
         // Dokter
         Route::resource('dokter', DokterController::class)->names([
-            'index' => 'admin.dokter.index',
-            'create' => 'admin.dokter.create',
-            'store' => 'admin.dokter.store',
-            'edit' => 'admin.dokter.edit',
-            'update' => 'admin.dokter.update',
-            'destroy' => 'admin.dokter.destroy',
+            'index' => 'dokter.index',
+            'create' => 'dokter.create',
+            'store' => 'dokter.store',
+            'edit' => 'dokter.edit',
+            'update' => 'dokter.update',
+            'destroy' => 'dokter.destroy',
         ]);
 
         // Perawat
         Route::resource('perawat', PerawatController::class)->names([
-            'index' => 'admin.perawat.index',
-            'create' => 'admin.perawat.create',
-            'store' => 'admin.perawat.store',
-            'edit' => 'admin.perawat.edit',
-            'update' => 'admin.perawat.update',
-            'destroy' => 'admin.perawat.destroy',
+            'index' => 'perawat.index',
+            'create' => 'perawat.create',
+            'store' => 'perawat.store',
+            'edit' => 'perawat.edit',
+            'update' => 'perawat.update',
+            'destroy' => 'perawat.destroy',
         ]);
 
         // Pet
         Route::resource('pet', PetController::class)->names([
-            'index' => 'admin.pet.index',
-            'create' => 'admin.pet.create',
-            'store' => 'admin.pet.store',
-            'edit' => 'admin.pet.edit',
-            'update' => 'admin.pet.update',
-            'destroy' => 'admin.pet.destroy',
+            'index' => 'pet.index',
+            'create' => 'pet.create',
+            'store' => 'pet.store',
+            'edit' => 'pet.edit',
+            'update' => 'pet.update',
+            'destroy' => 'pet.destroy',
         ]);
 
         // Jenis Hewan
         Route::resource('jenis-hewan', JenisHewanController::class)->names([
-            'index' => 'admin.jenis-hewan.index',
-            'create' => 'admin.jenis-hewan.create',
-            'store' => 'admin.jenis-hewan.store',
-            'edit' => 'admin.jenis-hewan.edit',
-            'update' => 'admin.jenis-hewan.update',
-            'destroy' => 'admin.jenis-hewan.destroy',
+            'index' => 'jenis-hewan.index',
+            'create' => 'jenis-hewan.create',
+            'store' => 'jenis-hewan.store',
+            'edit' => 'jenis-hewan.edit',
+            'update' => 'jenis-hewan.update',
+            'destroy' => 'jenis-hewan.destroy',
         ]);
 
         // Ras Hewan
         Route::resource('ras-hewan', RasHewanController::class)->names([
-            'index' => 'admin.ras-hewan.index',
-            'create' => 'admin.ras-hewan.create',
-            'store' => 'admin.ras-hewan.store',
-            'edit' => 'admin.ras-hewan.edit',
-            'update' => 'admin.ras-hewan.update',
-            'destroy' => 'admin.ras-hewan.destroy',
+            'index' => 'ras-hewan.index',
+            'create' => 'ras-hewan.create',
+            'store' => 'ras-hewan.store',
+            'edit' => 'ras-hewan.edit',
+            'update' => 'ras-hewan.update',
+            'destroy' => 'ras-hewan.destroy',
         ]);
 
         // Role
         Route::resource('role', RoleController::class)->names([
-            'index' => 'admin.role.index',
-            'create' => 'admin.role.create',
-            'store' => 'admin.role.store',
-            'edit' => 'admin.role.edit',
-            'update' => 'admin.role.update',
-            'destroy' => 'admin.role.destroy',
+            'index' => 'role.index',
+            'create' => 'role.create',
+            'store' => 'role.store',
+            'edit' => 'role.edit',
+            'update' => 'role.update',
+            'destroy' => 'role.destroy',
         ]);
 
         // Kategori
         Route::resource('kategori', KategoriController::class)->names([
-            'index' => 'admin.kategori.index',
-            'create' => 'admin.kategori.create',
-            'store' => 'admin.kategori.store',
-            'edit' => 'admin.kategori.edit',
-            'update' => 'admin.kategori.update',
-            'destroy' => 'admin.kategori.destroy',
+            'index' => 'kategori.index',
+            'create' => 'kategori.create',
+            'store' => 'kategori.store',
+            'edit' => 'kategori.edit',
+            'update' => 'kategori.update',
+            'destroy' => 'kategori.destroy',
         ]);
 
         // Kategori Klinis (pakai alias kk di URL)
         Route::resource('kk', KategoriKlinisController::class)->names([
-            'index' => 'admin.kategori-klinis.index',
-            'create' => 'admin.kategori-klinis.create',
-            'store' => 'admin.kategori-klinis.store',
-            'edit' => 'admin.kategori-klinis.edit',
-            'update' => 'admin.kategori-klinis.update',
-            'destroy' => 'admin.kategori-klinis.destroy',
+            'index' => 'kategori-klinis.index',
+            'create' => 'kategori-klinis.create',
+            'store' => 'kategori-klinis.store',
+            'edit' => 'kategori-klinis.edit',
+            'update' => 'kategori-klinis.update',
+            'destroy' => 'kategori-klinis.destroy',
         ]);
 
         // Kode Tindakan Terapi (pakai alias ktt di URL)
         Route::resource('ktt', KodeTindakanTerapiController::class)->names([
-            'index' => 'admin.kode-tindakan-terapi.index',
-            'create' => 'admin.kode-tindakan-terapi.create',
-            'store' => 'admin.kode-tindakan-terapi.store',
-            'edit' => 'admin.kode-tindakan-terapi.edit',
-            'update' => 'admin.kode-tindakan-terapi.update',
-            'destroy' => 'admin.kode-tindakan-terapi.destroy',
+            'index' => 'kode-tindakan-terapi.index',
+            'create' => 'kode-tindakan-terapi.create',
+            'store' => 'kode-tindakan-terapi.store',
+            'edit' => 'kode-tindakan-terapi.edit',
+            'update' => 'kode-tindakan-terapi.update',
+            'destroy' => 'kode-tindakan-terapi.destroy',
+        ]);
+
+        //Temu Dokter
+        Route::resource('temu-dokter', TemuDokterAdminController::class)->names([
+            'index' => 'temu-dokter.index',
+            'create' => 'temu-dokter.create',
+            'store' => 'temu-dokter.store',
+            'edit' => 'temu-dokter.edit',
+            'update' => 'temu-dokter.update',
+            'destroy' => 'temu-dokter.destroy',
+        ]);
+
+        //Rekam Medis
+        Route::resource('rekam-medis', RekamMedisController::class)->names([
+            'index' => 'rekam-medis.index',
+            'create' => 'rekam-medis.create',
+            'store' => 'rekam-medis.store',
+            'edit' => 'rekam-medis.edit',
+            'update' => 'rekam-medis.update',
+            'destroy' => 'rekam-medis.destroy',
         ]);
     });
 });
