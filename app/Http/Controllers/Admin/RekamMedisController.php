@@ -267,7 +267,7 @@ class RekamMedisController extends Controller
             ->orderBy('u.nama')
             ->get();
 
-        return view('rshp.admin.rekam-medis.create', compact('info', 'listDokter'));
+        return view('rshp.admin.DataMaster.rekam-medis.create', compact('info', 'listDokter'));
     }
 
     // STORE - Simpan rekam medis baru
