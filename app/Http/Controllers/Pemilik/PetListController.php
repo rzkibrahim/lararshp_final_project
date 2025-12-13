@@ -104,6 +104,6 @@ class PetListController extends Controller
             ->orderBy('td.waktu_daftar', 'desc')
             ->get();
 
-        return view('rshp.pemilik.pet-detail', compact('pet', 'riwayatKunjungan'));
+        return view('rshp.pemilik.pet.show', compact('pet', 'riwayatKunjungan'));
     }
 }

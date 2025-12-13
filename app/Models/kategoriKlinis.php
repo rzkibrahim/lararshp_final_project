@@ -9,7 +9,6 @@ class KategoriKlinis extends Model
     protected $table = 'kategori_klinis';
     protected $primaryKey = 'idkategori_klinis';
 
-    // 🚫 Nonaktifkan timestamps Laravel
     public $timestamps = false;
 
     protected $fillable = [

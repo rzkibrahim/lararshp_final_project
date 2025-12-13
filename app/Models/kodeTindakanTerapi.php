@@ -9,7 +9,6 @@ class KodeTindakanTerapi extends Model
     protected $table = 'kode_tindakan_terapi';
     protected $primaryKey = 'idkode_tindakan_terapi';
 
-    // ⛔ Tambahkan ini untuk mematikan created_at & updated_at
     public $timestamps = false;
 
     protected $fillable = [

@@ -152,7 +152,7 @@
                             <div class="w-8 h-8 rounded-lg bg-primary-100 flex items-center justify-center">
                                 <i class="fas fa-file-medical text-primary-600 text-sm"></i>
                             </div>
-                            <span class="font-medium">Reservasi List</span>
+                            <span class="font-medium">Reservasi Temu Dokter</span>
                         </a>
 
                         <a href="{{ route('pemilik.pet.list') }}"
