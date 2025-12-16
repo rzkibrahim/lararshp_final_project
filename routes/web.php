@@ -2,7 +2,15 @@
 
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
+
+// ============================================================================
+// CONTROLLER IMPORTS
+// ============================================================================
+
+// Public Controllers
 use App\Http\Controllers\rshp\rshpController;
+
+// Admin Controllers
 use App\Http\Controllers\Admin\DashboardAdminController;
 use App\Http\Controllers\Admin\JenisHewanController;
 use App\Http\Controllers\Admin\KategoriController;
@@ -18,42 +26,47 @@ use App\Http\Controllers\Admin\PerawatController;
 use App\Http\Controllers\Admin\RekamMedisController;
 use App\Http\Controllers\Admin\TemuDokterAdminController;
 
+// Dokter Controllers
 use App\Http\Controllers\Dokter\DashboardDokterController;
-use App\Http\Controllers\Dokter\RekamMedisDocController;
 use App\Http\Controllers\Dokter\RekamMedisListController;
 
+// Perawat Controllers
 use App\Http\Controllers\Perawat\DashboardPerawatController;
 use App\Http\Controllers\Perawat\RekamMedisPerController;
 
+// Pemilik Controllers
 use App\Http\Controllers\Pemilik\DashboardPemilikController;
 use App\Http\Controllers\Pemilik\PetListController;
 use App\Http\Controllers\Pemilik\ReservasiListController;
 use App\Http\Controllers\Pemilik\RekamMedisPemController;
 
+// Resepsionis Controllers
 use App\Http\Controllers\Resepsionis\DashboardResepsionisController;
 use App\Http\Controllers\Resepsionis\RegistrasiPemilikController;
 use App\Http\Controllers\Resepsionis\RegistrasiPetController;
 use App\Http\Controllers\Resepsionis\TemuDokterController;
 
-/*
-|--------------------------------------------------------------------------
-| Public Routes
-|--------------------------------------------------------------------------
-*/
+// ============================================================================
+// PUBLIC ROUTES (Tidak memerlukan autentikasi)
+// ============================================================================
 
-// Cek koneksi database
-Route::get('/cek-koneksi', [rshpController::class, 'cekKoneksi'])->name('site.cek-koneksi');
+// Database Connection Check
+Route::get('/cek-koneksi', [rshpController::class, 'cekKoneksi'])
+    ->name('site.cek-koneksi');
 
-// Halaman utama
+// Main Pages
 Route::get('/', [rshpController::class, 'index'])->name('home');
 Route::get('/struktur', [rshpController::class, 'struktur'])->name('struktur');
 Route::get('/layanan', [rshpController::class, 'layanan'])->name('layanan');
 Route::get('/visi-misi', [rshpController::class, 'visiMisi'])->name('visi-misi');
 
-// Authentication Routes (Laravel default)
+// Authentication Routes (Laravel default: login, register, password reset, etc.)
 Auth::routes();
 
-// Temporary routes untuk debugging
+// ============================================================================
+// DEBUG ROUTES (Hapus di production!)
+// ============================================================================
+
 Route::get('/force-logout', function () {
     Auth::logout();
     request()->session()->invalidate();
@@ -68,417 +81,382 @@ Route::get('/check-auth', function () {
     return 'User belum login';
 });
 
-/*
-|--------------------------------------------------------------------------
-| Administrator Routes
-|--------------------------------------------------------------------------
-*/
+// ============================================================================
+// ADMINISTRATOR ROUTES
+// Middleware: isAdministrator
+// Prefix: /admin
+// ============================================================================
 
 Route::middleware(['isAdministrator'])->prefix('admin')->name('admin.')->group(function () {
-
+    
     // Dashboard
     Route::get('/dashboard', [DashboardAdminController::class, 'index'])->name('dashboard');
 
-    // Data Master Routes
+    // ========================================================================
+    // DATA MASTER ROUTES
+    // ========================================================================
+    
     Route::prefix('datamaster')->group(function () {
 
-        // ==================== JENIS HEWAN ====================
-        Route::prefix('jenis-hewan')->group(function () {
-            Route::get('/trash', [JenisHewanController::class, 'trash'])->name('jenis-hewan.trash');
-            Route::post('/{id}/restore', [JenisHewanController::class, 'restore'])->name('jenis-hewan.restore');
-            Route::delete('/{id}/force-delete', [JenisHewanController::class, 'forceDelete'])->name('jenis-hewan.force-delete');
+        // ====================================================================
+        // JENIS HEWAN (Animal Species)
+        // ====================================================================
+        Route::prefix('jenis-hewan')->name('jenis-hewan.')->group(function () {
+            // Trash Management
+            Route::get('/trash', [JenisHewanController::class, 'trash'])->name('trash');
+            Route::post('/{id}/restore', [JenisHewanController::class, 'restore'])->name('restore');
+            Route::delete('/{id}/force-delete', [JenisHewanController::class, 'forceDelete'])->name('force-delete');
         });
+        
+        Route::resource('jenis-hewan', JenisHewanController::class)->except(['show']);
 
-        // ==================== KATEGORI ====================
-        Route::prefix('kategori')->group(function () {
-            Route::get('/trash', [KategoriController::class, 'trash'])->name('kategori.trash');
-            Route::post('/{id}/restore', [KategoriController::class, 'restore'])->name('kategori.restore');
-            Route::delete('/{id}/force-delete', [KategoriController::class, 'forceDelete'])->name('kategori.force-delete');
+        // ====================================================================
+        // RAS HEWAN (Animal Breeds)
+        // ====================================================================
+        Route::prefix('ras-hewan')->name('ras-hewan.')->group(function () {
+            // Trash Management
+            Route::get('/trash', [RasHewanController::class, 'trash'])->name('trash');
+            Route::post('/{id}/restore', [RasHewanController::class, 'restore'])->name('restore');
+            Route::delete('/{id}/force-delete', [RasHewanController::class, 'forceDelete'])->name('force-delete');
         });
+        
+        Route::resource('ras-hewan', RasHewanController::class)->except(['show']);
 
-        // ==================== KATEGORI KLINIS ====================
-        Route::prefix('kk')->group(function () {
-            Route::get('/trash', [KategoriKlinisController::class, 'trash'])->name('kategori-klinis.trash');
-            Route::post('/{id}/restore', [KategoriKlinisController::class, 'restore'])->name('kategori-klinis.restore');
-            Route::delete('/{id}/force-delete', [KategoriKlinisController::class, 'forceDelete'])->name('kategori-klinis.force-delete');
+        // ====================================================================
+        // KATEGORI (Categories)
+        // ====================================================================
+        Route::prefix('kategori')->name('kategori.')->group(function () {
+            // Trash Management
+            Route::get('/trash', [KategoriController::class, 'trash'])->name('trash');
+            Route::post('/{id}/restore', [KategoriController::class, 'restore'])->name('restore');
+            Route::delete('/{id}/force-delete', [KategoriController::class, 'forceDelete'])->name('force-delete');
         });
+        
+        Route::resource('kategori', KategoriController::class)->except(['show']);
 
-        // ==================== KODE TINDAKAN TERAPI ====================
-        Route::prefix('ktt')->group(function () {
-            Route::get('/trash', [KodeTindakanTerapiController::class, 'trash'])->name('kode-tindakan-terapi.trash');
-            Route::post('/{id}/restore', [KodeTindakanTerapiController::class, 'restore'])->name('kode-tindakan-terapi.restore');
-            Route::delete('/{id}/force-delete', [KodeTindakanTerapiController::class, 'forceDelete'])->name('kode-tindakan-terapi.force-delete');
+        // ====================================================================
+        // KATEGORI KLINIS (Clinical Categories)
+        // URL: /admin/datamaster/kk
+        // ====================================================================
+        Route::prefix('kk')->name('kategori-klinis.')->group(function () {
+            // Trash Management
+            Route::get('/trash', [KategoriKlinisController::class, 'trash'])->name('trash');
+            Route::post('/{id}/restore', [KategoriKlinisController::class, 'restore'])->name('restore');
+            Route::delete('/{id}/force-delete', [KategoriKlinisController::class, 'forceDelete'])->name('force-delete');
         });
+        
+        Route::resource('kk', KategoriKlinisController::class)
+            ->except(['show'])
+            ->names([
+                'index' => 'kategori-klinis.index',
+                'create' => 'kategori-klinis.create',
+                'store' => 'kategori-klinis.store',
+                'edit' => 'kategori-klinis.edit',
+                'update' => 'kategori-klinis.update',
+                'destroy' => 'kategori-klinis.destroy',
+            ]);
 
-        // ==================== RAS HEWAN ====================
-        Route::prefix('ras-hewan')->group(function () {
-            Route::get('/trash', [RasHewanController::class, 'trash'])->name('ras-hewan.trash');
-            Route::post('/{id}/restore', [RasHewanController::class, 'restore'])->name('ras-hewan.restore');
-            Route::delete('/{id}/force-delete', [RasHewanController::class, 'forceDelete'])->name('ras-hewan.force-delete');
+        // ====================================================================
+        // KODE TINDAKAN TERAPI (Treatment Codes)
+        // URL: /admin/datamaster/ktt
+        // ====================================================================
+        Route::prefix('ktt')->name('kode-tindakan-terapi.')->group(function () {
+            // Trash Management
+            Route::get('/trash', [KodeTindakanTerapiController::class, 'trash'])->name('trash');
+            Route::post('/{id}/restore', [KodeTindakanTerapiController::class, 'restore'])->name('restore');
+            Route::delete('/{id}/force-delete', [KodeTindakanTerapiController::class, 'forceDelete'])->name('force-delete');
         });
+        
+        Route::resource('ktt', KodeTindakanTerapiController::class)
+            ->except(['show'])
+            ->names([
+                'index' => 'kode-tindakan-terapi.index',
+                'create' => 'kode-tindakan-terapi.create',
+                'store' => 'kode-tindakan-terapi.store',
+                'edit' => 'kode-tindakan-terapi.edit',
+                'update' => 'kode-tindakan-terapi.update',
+                'destroy' => 'kode-tindakan-terapi.destroy',
+            ]);
 
-        // ==================== ROLE ====================
-        Route::prefix('role')->group(function () {
-            Route::get('/trash', [RoleController::class, 'trash'])->name('role.trash');
-            Route::post('/{id}/restore', [RoleController::class, 'restore'])->name('role.restore');
-            Route::delete('/{id}/force-delete', [RoleController::class, 'forceDelete'])->name('role.force-delete');
+        // ====================================================================
+        // ROLE (User Roles)
+        // ====================================================================
+        Route::prefix('role')->name('role.')->group(function () {
+            // Trash Management
+            Route::get('/trash', [RoleController::class, 'trash'])->name('trash');
+            Route::post('/{id}/restore', [RoleController::class, 'restore'])->name('restore');
+            Route::delete('/{id}/force-delete', [RoleController::class, 'forceDelete'])->name('force-delete');
         });
+        
+        Route::resource('role', RoleController::class)->except(['show']);
 
-        // ==================== USER ====================
-        Route::prefix('user')->group(function () {
-            Route::get('/trash', [UserController::class, 'trash'])->name('user.trash');
-            Route::post('/{id}/restore', [UserController::class, 'restore'])->name('user.restore');
-            Route::delete('/{id}/force-delete', [UserController::class, 'forceDelete'])->name('user.force-delete');
-        });
-
-        // ==================== PEMILIK ====================
-        Route::prefix('pemilik')->group(function () {
-            Route::get('/trash', [PemilikController::class, 'trash'])->name('pemilik.trash');
-            Route::post('/{id}/restore', [PemilikController::class, 'restore'])->name('pemilik.restore');
-            Route::delete('/{id}/force-delete', [PemilikController::class, 'forceDelete'])->name('pemilik.force-delete');
-        });
-
-        // ==================== PET ====================
-        Route::prefix('pet')->group(function () {
-            Route::get('/trash', [PetController::class, 'trash'])->name('pet.trash');
-            Route::post('/{id}/restore', [PetController::class, 'restore'])->name('pet.restore');
-            Route::delete('/{id}/force-delete', [PetController::class, 'forceDelete'])->name('pet.force-delete');
-        });
-
-        // ==================== DOKTER ====================
-        Route::prefix('dokter')->group(function () {
-            Route::get('/trash', [DokterController::class, 'trash'])->name('dokter.trash');
-            Route::post('/{id}/restore', [DokterController::class, 'restore'])->name('dokter.restore');
-            Route::delete('/{id}/force-delete', [DokterController::class, 'forceDelete'])->name('dokter.force-delete');
-        });
-
-        // ==================== PERAWAT ====================
-        Route::prefix('perawat')->group(function () {
-            Route::get('/trash', [PerawatController::class, 'trash'])->name('perawat.trash');
-            Route::post('/{id}/restore', [PerawatController::class, 'restore'])->name('perawat.restore');
-            Route::delete('/{id}/force-delete', [PerawatController::class, 'forceDelete'])->name('perawat.force-delete');
-        });
-
-        // ===================== TEMU DOKTER =====================
-        Route::prefix('temu-dokter')->name('temu-dokter.')->group(function () {
-            Route::get('/', [TemuDokterAdminController::class, 'index'])->name('index');
-            Route::post('/store', [TemuDokterAdminController::class, 'store'])->name('store');
-            Route::get('/edit/{id}', [TemuDokterAdminController::class, 'edit'])->name('edit');
-            Route::put('/update/{id}', [TemuDokterAdminController::class, 'update'])->name('update');
-            Route::post('/update-status', [TemuDokterAdminController::class, 'updateStatus'])->name('update-status');
-            Route::delete('/destroy/{id}', [TemuDokterAdminController::class, 'destroy'])->name('destroy');
+        // ====================================================================
+        // USER (System Users)
+        // ====================================================================
+        Route::prefix('user')->name('user.')->group(function () {
+            // Trash Management
+            Route::get('/trash', [UserController::class, 'trash'])->name('trash');
+            Route::post('/{id}/restore', [UserController::class, 'restore'])->name('restore');
+            Route::delete('/{id}/force-delete', [UserController::class, 'forceDelete'])->name('force-delete');
             
-            // Trash Routes
-            Route::get('/trash', [TemuDokterAdminController::class, 'trash'])->name('trash');
-            Route::post('/restore/{id}', [TemuDokterAdminController::class, 'restore'])->name('restore');
-            Route::delete('/force-delete/{id}', [TemuDokterAdminController::class, 'forceDelete'])->name('force-delete');
+            // Reset Password
+            Route::post('/{id}/reset-password', [UserController::class, 'resetPassword'])->name('reset-password');
         });
+        
+        Route::resource('user', UserController::class)->except(['show']);
 
-        // ===================== REKAM MEDIS ======================
+        // ====================================================================
+        // PEMILIK (Pet Owners)
+        // ====================================================================
+        Route::prefix('pemilik')->name('pemilik.')->group(function () {
+            // Trash Management
+            Route::get('/trash', [PemilikController::class, 'trash'])->name('trash');
+            Route::post('/{id}/restore', [PemilikController::class, 'restore'])->name('restore');
+            Route::delete('/{id}/force-delete', [PemilikController::class, 'forceDelete'])->name('force-delete');
+        });
+        
+        Route::resource('pemilik', PemilikController::class)->except(['show']);
+
+        // ====================================================================
+        // PET (Pets/Animals)
+        // ====================================================================
+        Route::prefix('pet')->name('pet.')->group(function () {
+            // Trash Management
+            Route::get('/trash', [PetController::class, 'trash'])->name('trash');
+            Route::post('/{id}/restore', [PetController::class, 'restore'])->name('restore');
+            Route::delete('/{id}/force-delete', [PetController::class, 'forceDelete'])->name('force-delete');
+        });
+        
+        Route::resource('pet', PetController::class);
+
+        // ====================================================================
+        // DOKTER (Veterinarians)
+        // ====================================================================
+        Route::prefix('dokter')->name('dokter.')->group(function () {
+            // Trash Management
+            Route::get('/trash', [DokterController::class, 'trash'])->name('trash');
+            Route::post('/{id}/restore', [DokterController::class, 'restore'])->name('restore');
+            Route::delete('/{id}/force-delete', [DokterController::class, 'forceDelete'])->name('force-delete');
+        });
+        
+        Route::resource('dokter', DokterController::class)->except(['show']);
+
+        // ====================================================================
+        // PERAWAT (Nurses)
+        // ====================================================================
+        Route::prefix('perawat')->name('perawat.')->group(function () {
+            // Trash Management
+            Route::get('/trash', [PerawatController::class, 'trash'])->name('trash');
+            Route::post('/{id}/restore', [PerawatController::class, 'restore'])->name('restore');
+            Route::delete('/{id}/force-delete', [PerawatController::class, 'forceDelete'])->name('force-delete');
+        });
+        
+        Route::resource('perawat', PerawatController::class)->except(['show']);
+
+        // ====================================================================
+        // TEMU DOKTER (Doctor Appointments/Reservations)
+        // ====================================================================
+        Route::prefix('temu-dokter')->name('temu-dokter.')->group(function () {
+            // Custom Actions
+            Route::post('/update-status', [TemuDokterAdminController::class, 'updateStatus'])->name('update-status');
+            
+            // Trash Management
+            Route::get('/trash', [TemuDokterAdminController::class, 'trash'])->name('trash');
+            Route::post('/{id}/restore', [TemuDokterAdminController::class, 'restore'])->name('restore');
+            Route::delete('/{id}/force-delete', [TemuDokterAdminController::class, 'forceDelete'])->name('force-delete');
+        });
+        
+        Route::resource('temu-dokter', TemuDokterAdminController::class)->except(['show']);
+
+        // ====================================================================
+        // REKAM MEDIS (Medical Records)
+        // ====================================================================
         Route::prefix('rekam-medis')->name('rekam-medis.')->group(function () {
-            // CRUD Routes
-            Route::get('/', [RekamMedisController::class, 'index'])->name('index');
+            // Custom Create (with reservation and pet ID)
             Route::get('/create/{idReservasi}/{idPet}', [RekamMedisController::class, 'create'])->name('create');
-            Route::post('/store', [RekamMedisController::class, 'store'])->name('store');
+            
+            // Detail View
             Route::get('/detail/{id}', [RekamMedisController::class, 'detail'])->name('detail');
+            
+            // Update Header
             Route::put('/update-header/{id}', [RekamMedisController::class, 'updateHeader'])->name('update-header');
-            Route::delete('/destroy/{id}', [RekamMedisController::class, 'destroy'])->name('destroy');
-
-            // Detail Tindakan Routes
+            
+            // Detail Management (Tindakan)
             Route::post('/detail/{id}/create', [RekamMedisController::class, 'createDetail'])->name('create-detail');
             Route::put('/detail/{id}/update/{idDetail}', [RekamMedisController::class, 'updateDetail'])->name('update-detail');
             Route::delete('/detail/{id}/delete/{idDetail}', [RekamMedisController::class, 'deleteDetail'])->name('delete-detail');
-
-            // Trash Routes
+            
+            // Trash Management
             Route::get('/trash', [RekamMedisController::class, 'trash'])->name('trash');
             Route::post('/restore/{id}', [RekamMedisController::class, 'restore'])->name('restore');
             Route::delete('/force-delete/{id}', [RekamMedisController::class, 'forceDelete'])->name('force-delete');
         });
-
-        // User
-        Route::resource('user', UserController::class)->names([
-            'index' => 'user.index',
-            'create' => 'user.create',
-            'store' => 'user.store',
-            'edit' => 'user.edit',
-            'update' => 'user.update',
-            'destroy' => 'user.destroy',
-        ]);
-
-        // ✅ TAMBAHKAN ROUTE INI - Reset Password
-        Route::post('user/{id}/reset-password', [UserController::class, 'resetPassword'])
-            ->name('user.reset-password');
-
-        // Pemilik
-        Route::resource('pemilik', PemilikController::class)->names([
-            'index' => 'pemilik.index',
-            'create' => 'pemilik.create',
-            'store' => 'pemilik.store',
-            'edit' => 'pemilik.edit',
-            'update' => 'pemilik.update',
-            'destroy' => 'pemilik.destroy',
-        ]);
-
-        // Dokter
-        Route::resource('dokter', DokterController::class)->names([
-            'index' => 'dokter.index',
-            'create' => 'dokter.create',
-            'store' => 'dokter.store',
-            'edit' => 'dokter.edit',
-            'update' => 'dokter.update',
-            'destroy' => 'dokter.destroy',
-        ]);
-
-        // Perawat
-        Route::resource('perawat', PerawatController::class)->names([
-            'index' => 'perawat.index',
-            'create' => 'perawat.create',
-            'store' => 'perawat.store',
-            'edit' => 'perawat.edit',
-            'update' => 'perawat.update',
-            'destroy' => 'perawat.destroy',
-        ]);
-
-        // Pet
-        Route::resource('pet', PetController::class)->names([
-            'index' => 'pet.index',
-            'create' => 'pet.create',
-            'store' => 'pet.store',
-            'edit' => 'pet.edit',
-            'update' => 'pet.update',
-            'destroy' => 'pet.destroy',
-        ]);
-
-        // Jenis Hewan
-        Route::resource('jenis-hewan', JenisHewanController::class)->names([
-            'index' => 'jenis-hewan.index',
-            'create' => 'jenis-hewan.create',
-            'store' => 'jenis-hewan.store',
-            'edit' => 'jenis-hewan.edit',
-            'update' => 'jenis-hewan.update',
-            'destroy' => 'jenis-hewan.destroy',
-        ]);
-
-        // Ras Hewan
-        Route::resource('ras-hewan', RasHewanController::class)->names([
-            'index' => 'ras-hewan.index',
-            'create' => 'ras-hewan.create',
-            'store' => 'ras-hewan.store',
-            'edit' => 'ras-hewan.edit',
-            'update' => 'ras-hewan.update',
-            'destroy' => 'ras-hewan.destroy',
-        ]);
-
-        // Role
-        Route::resource('role', RoleController::class)->names([
-            'index' => 'role.index',
-            'create' => 'role.create',
-            'store' => 'role.store',
-            'edit' => 'role.edit',
-            'update' => 'role.update',
-            'destroy' => 'role.destroy',
-        ]);
-
-        // Kategori
-        Route::resource('kategori', KategoriController::class)->names([
-            'index' => 'kategori.index',
-            'create' => 'kategori.create',
-            'store' => 'kategori.store',
-            'edit' => 'kategori.edit',
-            'update' => 'kategori.update',
-            'destroy' => 'kategori.destroy',
-        ]);
-
-        // Kategori Klinis (pakai alias kk di URL)
-        Route::resource('kk', KategoriKlinisController::class)->names([
-            'index' => 'kategori-klinis.index',
-            'create' => 'kategori-klinis.create',
-            'store' => 'kategori-klinis.store',
-            'edit' => 'kategori-klinis.edit',
-            'update' => 'kategori-klinis.update',
-            'destroy' => 'kategori-klinis.destroy',
-        ]);
-
-        // Kode Tindakan Terapi (pakai alias ktt di URL)
-        Route::resource('ktt', KodeTindakanTerapiController::class)->names([
-            'index' => 'kode-tindakan-terapi.index',
-            'create' => 'kode-tindakan-terapi.create',
-            'store' => 'kode-tindakan-terapi.store',
-            'edit' => 'kode-tindakan-terapi.edit',
-            'update' => 'kode-tindakan-terapi.update',
-            'destroy' => 'kode-tindakan-terapi.destroy',
-        ]);
-
-        //Temu Dokter
-        Route::resource('temu-dokter', TemuDokterAdminController::class)->names([
-            'index' => 'temu-dokter.index',
-            'create' => 'temu-dokter.create',
-            'store' => 'temu-dokter.store',
-            'edit' => 'temu-dokter.edit',
-            'update' => 'temu-dokter.update',
-            'destroy' => 'temu-dokter.destroy',
-        ]);
-
-        //Rekam Medis
-        Route::resource('rekam-medis', RekamMedisController::class)->names([
-            'index' => 'rekam-medis.index',
-            'create' => 'rekam-medis.create',
-            'store' => 'rekam-medis.store',
-            'edit' => 'rekam-medis.edit',
-            'update' => 'rekam-medis.update',
-            'destroy' => 'rekam-medis.destroy',
-        ]);
+        
+        Route::resource('rekam-medis', RekamMedisController::class)->only(['index', 'store', 'destroy']);
     });
 });
 
-/*
-|--------------------------------------------------------------------------
-| Resepsionis Routes - DIPERBAIKI
-|--------------------------------------------------------------------------
-*/
+// ============================================================================
+// RESEPSIONIS ROUTES
+// Middleware: auth, isResepsionis
+// Prefix: /resepsionis
+// ============================================================================
 
 Route::middleware(['auth', 'isResepsionis'])->prefix('resepsionis')->name('resepsionis.')->group(function () {
-
+    
     // Dashboard
     Route::get('/dashboard', [DashboardResepsionisController::class, 'index'])->name('dashboard');
 
-    // ===== PEMILIK ROUTES =====
-    Route::prefix('pemilik')->name('pemilik.')->group(function () {
-        Route::get('/', [RegistrasiPemilikController::class, 'index'])->name('index');
-        Route::get('/create', [RegistrasiPemilikController::class, 'create'])->name('create');
-        Route::post('/', [RegistrasiPemilikController::class, 'store'])->name('store');
-        Route::get('/{id}/edit', [RegistrasiPemilikController::class, 'edit'])->name('edit');
-        Route::put('/{id}', [RegistrasiPemilikController::class, 'update'])->name('update');
-        Route::delete('/{id}', [RegistrasiPemilikController::class, 'destroy'])->name('destroy');
-    });
+    // ========================================================================
+    // PEMILIK MANAGEMENT (Owner Registration)
+    // ========================================================================
+    Route::resource('pemilik', RegistrasiPemilikController::class)->except(['show']);
 
-    // ===== PET ROUTES =====
-    Route::prefix('pet')->name('pet.')->group(function () {
-        Route::get('/', [RegistrasiPetController::class, 'index'])->name('index');
-        Route::get('/create', [RegistrasiPetController::class, 'create'])->name('create');
-        Route::post('/', [RegistrasiPetController::class, 'store'])->name('store');
-        Route::get('/{id}', [RegistrasiPetController::class, 'show'])->name('show');
-        Route::get('/{id}/edit', [RegistrasiPetController::class, 'edit'])->name('edit');
-        Route::put('/{id}', [RegistrasiPetController::class, 'update'])->name('update');
-        Route::delete('/{id}', [RegistrasiPetController::class, 'destroy'])->name('destroy');
-    });
+    // ========================================================================
+    // PET MANAGEMENT (Pet Registration)
+    // ========================================================================
+    Route::resource('pet', RegistrasiPetController::class);
 
-    // ===== TEMU DOKTER ROUTES =====
+    // ========================================================================
+    // TEMU DOKTER (Appointment Management)
+    // ========================================================================
     Route::prefix('temu-dokter')->name('temu-dokter.')->group(function () {
         Route::get('/', [TemuDokterController::class, 'index'])->name('index');
         Route::post('/', [TemuDokterController::class, 'store'])->name('store');
         Route::post('/update-status', [TemuDokterController::class, 'updateStatus'])->name('update-status');
     });
 
-    // ===== BACKWARD COMPATIBILITY (OPSIONAL) =====
-    // Hapus route duplikat di bawah ini jika tidak diperlukan
+    // ========================================================================
+    // BACKWARD COMPATIBILITY ROUTES (Bisa dihapus jika tidak digunakan)
+    // ========================================================================
     Route::get('/registrasi-pemilik', [RegistrasiPemilikController::class, 'index'])->name('registrasi.pemilik');
     Route::post('/registrasi-pemilik', [RegistrasiPemilikController::class, 'store'])->name('registrasi.pemilik.store');
-
     Route::get('/registrasi-pet', [RegistrasiPetController::class, 'index'])->name('registrasi.pet');
     Route::get('/registrasi-pet/create', [RegistrasiPetController::class, 'create'])->name('registrasi.pet.create');
     Route::post('/registrasi-pet', [RegistrasiPetController::class, 'store'])->name('registrasi.pet.store');
 });
 
-/*
-|--------------------------------------------------------------------------
-| Dokter Routes - Sesuai dengan Native PHP
-|--------------------------------------------------------------------------
-*/
+// ============================================================================
+// DOKTER ROUTES
+// Middleware: auth, isDokter
+// Prefix: /dokter
+// ============================================================================
 
 Route::middleware(['auth', 'isDokter'])->prefix('dokter')->name('dokter.')->group(function () {
-
-    // Dashboard (sesuai home-dokter.php)
+    
+    // Dashboard
     Route::get('/dashboard', [DashboardDokterController::class, 'index'])->name('dashboard');
 
-    // Data Pasien
+    // Data Pasien (Patient List)
     Route::get('/data-pasien', [DashboardDokterController::class, 'dataPasien'])->name('data-pasien');
-
-    // Rekam Medis - List & Detail (sesuai rekam-medis-list.php dan rekam-medis-detail-doc.php)
-    Route::get('/rekam-medis', [RekamMedisListController::class, 'index'])->name('rekam-medis.list');
-    Route::get('/rekam-medis/{id}', [RekamMedisListController::class, 'show'])->name('rekam-medis.show');
-
-    // CRUD Detail Rekam Medis - Dipindah ke DashboardDokterController
-    Route::get('/rekam-medis/{idRekamMedis}/detail/create', [DashboardDokterController::class, 'detailRekamMedisCreate'])
-        ->name('detail-rekam-medis.create');
-    Route::post('/rekam-medis/{idRekamMedis}/detail', [DashboardDokterController::class, 'detailRekamMedisStore'])
-        ->name('detail-rekam-medis.store');
-    Route::get('/rekam-medis/{idRekamMedis}/detail/{idDetail}/edit', [DashboardDokterController::class, 'detailRekamMedisEdit'])
-        ->name('detail-rekam-medis.edit');
-    Route::put('/rekam-medis/{idRekamMedis}/detail/{idDetail}', [DashboardDokterController::class, 'detailRekamMedisUpdate'])
-        ->name('detail-rekam-medis.update');
-    Route::delete('/rekam-medis/{idRekamMedis}/detail/{idDetail}', [DashboardDokterController::class, 'detailRekamMedisDestroy'])
-        ->name('detail-rekam-medis.destroy');
-
-    // Selesai Rekam Medis
-    Route::post('/rekam-medis/{id}/selesai', [DashboardDokterController::class, 'selesaiRekamMedis'])
-        ->name('rekam-medis.selesai');
 
     // Profil
     Route::get('/profil', [DashboardDokterController::class, 'profil'])->name('profil');
+
+    // ========================================================================
+    // REKAM MEDIS (Medical Records)
+    // ========================================================================
+    
+    // List & Detail View
+    Route::get('/rekam-medis', [RekamMedisListController::class, 'index'])->name('rekam-medis.list');
+    Route::get('/rekam-medis/{id}', [RekamMedisListController::class, 'show'])->name('rekam-medis.show');
+
+    // Detail Management (Treatment Details)
+    Route::prefix('rekam-medis/{idRekamMedis}/detail')->name('detail-rekam-medis.')->group(function () {
+        Route::get('/create', [DashboardDokterController::class, 'detailRekamMedisCreate'])->name('create');
+        Route::post('/', [DashboardDokterController::class, 'detailRekamMedisStore'])->name('store');
+        Route::get('/{idDetail}/edit', [DashboardDokterController::class, 'detailRekamMedisEdit'])->name('edit');
+        Route::put('/{idDetail}', [DashboardDokterController::class, 'detailRekamMedisUpdate'])->name('update');
+        Route::delete('/{idDetail}', [DashboardDokterController::class, 'detailRekamMedisDestroy'])->name('destroy');
+    });
+
+    // Complete Medical Record
+    Route::post('/rekam-medis/{id}/selesai', [DashboardDokterController::class, 'selesaiRekamMedis'])->name('rekam-medis.selesai');
 });
 
-/*
-|--------------------------------------------------------------------------
-| Perawat Routes - DIPERBAIKI
-|--------------------------------------------------------------------------
-*/
+// ============================================================================
+// PERAWAT ROUTES
+// Middleware: auth, isPerawat
+// Prefix: /perawat
+// ============================================================================
 
 Route::middleware(['auth', 'isPerawat'])->prefix('perawat')->name('perawat.')->group(function () {
+    
     // Dashboard
     Route::get('/dashboard', [DashboardPerawatController::class, 'index'])->name('dashboard');
 
-    // Data Pasien (view data pasien)
+    // Data Pasien (Patient List)
     Route::get('/data-pasien', [DashboardPerawatController::class, 'dataPasien'])->name('data-pasien');
 
-    // Rekam Medis Routes
-    Route::get('/rekam-medis', [RekamMedisPerController::class, 'index'])->name('rekam-medis.index');
-    Route::get('/rekam-medis/create/{idReservasi}/{idPet}', [RekamMedisPerController::class, 'create'])->name('rekam-medis.create');
-    Route::post('/rekam-medis', [RekamMedisPerController::class, 'store'])->name('rekam-medis.store');
-    Route::get('/rekam-medis/{id}', [RekamMedisPerController::class, 'detail'])->name('rekam-medis.detail');
-    Route::post('/rekam-medis/{id}/header', [RekamMedisPerController::class, 'updateHeader'])->name('rekam-medis.update-header');
-    Route::post('/rekam-medis/{id}/detail', [RekamMedisPerController::class, 'createDetail'])->name('rekam-medis.create-detail');
-    Route::put('/rekam-medis/{id}/detail/{idDetail}', [RekamMedisPerController::class, 'updateDetail'])->name('rekam-medis.update-detail');
-    Route::delete('/rekam-medis/{id}/detail/{idDetail}', [RekamMedisPerController::class, 'deleteDetail'])->name('rekam-medis.delete-detail');
-
-    // Pasien Hari Ini
+    // Pasien Hari Ini (Today's Patients)
     Route::get('/pasien-hari-ini', [DashboardPerawatController::class, 'pasienHariIni'])->name('pasien-hari-ini');
-
-    // Tindakan
-    Route::get('/tindakan', [DashboardPerawatController::class, 'tindakan'])->name('tindakan');
-    Route::get('/tindakan/create/{id}', [DashboardPerawatController::class, 'tindakanCreate'])->name('tindakan.create');
 
     // Profil
     Route::get('/profil', [DashboardPerawatController::class, 'profil'])->name('profil');
+
+    // ========================================================================
+    // REKAM MEDIS (Medical Records Management)
+    // ========================================================================
+    Route::prefix('rekam-medis')->name('rekam-medis.')->group(function () {
+        // List
+        Route::get('/', [RekamMedisPerController::class, 'index'])->name('index');
+        
+        // Create with reservation and pet ID
+        Route::get('/create/{idReservasi}/{idPet}', [RekamMedisPerController::class, 'create'])->name('create');
+        Route::post('/', [RekamMedisPerController::class, 'store'])->name('store');
+        
+        // Detail View
+        Route::get('/{id}', [RekamMedisPerController::class, 'detail'])->name('detail');
+        
+        // Update Header
+        Route::post('/{id}/header', [RekamMedisPerController::class, 'updateHeader'])->name('update-header');
+        
+        // Detail Management
+        Route::post('/{id}/detail', [RekamMedisPerController::class, 'createDetail'])->name('create-detail');
+        Route::put('/{id}/detail/{idDetail}', [RekamMedisPerController::class, 'updateDetail'])->name('update-detail');
+        Route::delete('/{id}/detail/{idDetail}', [RekamMedisPerController::class, 'deleteDetail'])->name('delete-detail');
+    });
+
+    // ========================================================================
+    // TINDAKAN (Treatment Actions)
+    // ========================================================================
+    Route::get('/tindakan', [DashboardPerawatController::class, 'tindakan'])->name('tindakan');
+    Route::get('/tindakan/create/{id}', [DashboardPerawatController::class, 'tindakanCreate'])->name('tindakan.create');
 });
 
-/*
-|--------------------------------------------------------------------------
-| Pemilik Routes - DIPERBAIKI
-|--------------------------------------------------------------------------
-*/
+// ============================================================================
+// PEMILIK ROUTES (Pet Owner)
+// Middleware: auth, isPemilik
+// Prefix: /pemilik
+// ============================================================================
 
-// Pemilik Routes - DIPERBAIKI
 Route::middleware(['auth', 'isPemilik'])->prefix('pemilik')->name('pemilik.')->group(function () {
+    
     // Dashboard
     Route::get('/dashboard', [DashboardPemilikController::class, 'index'])->name('dashboard');
     Route::get('/home', [DashboardPemilikController::class, 'index'])->name('home');
 
-    // Pet (view pet yang dimiliki)
+    // Profil
+    Route::get('/profil', [DashboardPemilikController::class, 'profil'])->name('profil');
+
+    // ========================================================================
+    // PET (View owned pets)
+    // ========================================================================
     Route::get('/pet', [PetListController::class, 'index'])->name('pet.list');
     Route::get('/pet/{id}', [PetListController::class, 'show'])->name('pet.show');
 
-    // Rekam Medis (view rekam medis)
-    Route::get('/rekamkmedis', [RekamMedisPemController::class, 'index'])->name('rekammedis.list');
+    // ========================================================================
+    // REKAM MEDIS (View medical records)
+    // ========================================================================
+    Route::get('/rekammedis', [RekamMedisPemController::class, 'index'])->name('rekammedis.list');
     Route::get('/rekammedis/{id}', [RekamMedisPemController::class, 'show'])->name('rekammedis.show');
 
-    // Reservasi (view jadwal temu dokter)
-    Route::get('/reservasi', [ReservasiListController::class, 'index'])->name('reservasi.list');
-    Route::post('/reservasi', [ReservasiListController::class, 'store'])->name('reservasi.store');
-
-    // ✅ TAMBAHKAN ROUTE INI - Batalkan Reservasi
-    Route::post('/reservasi/{id}/cancel', [ReservasiListController::class, 'cancel'])->name('reservasi.cancel');
-
-    // Profil
-    Route::get('/profil', [DashboardPemilikController::class, 'profil'])->name('profil');
+    // ========================================================================
+    // RESERVASI (Appointment Management)
+    // ========================================================================
+    Route::prefix('reservasi')->name('reservasi.')->group(function () {
+        Route::get('/', [ReservasiListController::class, 'index'])->name('list');
+        Route::post('/', [ReservasiListController::class, 'store'])->name('store');
+        Route::post('/{id}/cancel', [ReservasiListController::class, 'cancel'])->name('cancel');
+    });
 });
